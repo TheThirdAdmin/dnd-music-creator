@@ -1,0 +1,37 @@
+tavern-night: Rowdy medieval tavern music, the band already playing from the first bar: a folk trio in a crowded wooden inn at night, jaunty fiddle, plucked lute, frame drum, a drinking-song jig. Cosy, dry, close-miked sound with crowd chatter and clinking mugs. Calm and peaceful, gentle and warm, relaxed melody. Medium tempo. Instrumental.
+
+town: Folk music for a peaceful medieval village. Warm and tranquil, slow. A solo wooden flute plays a gentle, rolling melody, with soft acoustic lute providing warm chords underneath. Close-miked sound. Instrumental.
+
+village-troubled: Folk music for a troubled medieval village. Tense and melancholy, slow. A solo viol or cello plays a sorrowful, lingering melody, with dissonant acoustic guitar and low drones pulsing anxiously underneath. Close-miked sound. Instrumental.
+
+forest-travel: Upbeat fantasy adventure music for a journey along an old forest road: lively fiddle and wooden flute over bouncing strings, soft harp and light hand drum at a brisk walking pace. Open, airy outdoor sound. Calm and peaceful, gentle and warm, relaxed melody. Medium tempo. Instrumental.
+
+mountain-pass: Cinematic score for a cold, windswept mountain pass: low horns, deep drums and long string lines, with a lone wooden flute. Vast, echoing outdoor space. Tense and suspenseful: tremolo strings, low pulsing ostinato, a sense of hidden danger. Slow tempo. Instrumental.
+
+at-sea: An excerpt from the middle of the cue, already at full intensity from the first second. Rousing sea-shanty music aboard a wooden sailing ship: fiddle and tin whistle lead over a steady stomping bodhran beat in swaying 6/8, soft accordion underneath, a tight in-tune band. Open sound with wind and distant waves. Calm and peaceful, gentle and warm, relaxed melody. Medium tempo. Instrumental.
+
+dungeon: Dark fantasy score for a damp underground dungeon: low string drones, distant metallic scrapes, sparse deep percussion and dripping water. Cold stone reverb. Tense and suspenseful: tremolo strings, low pulsing ostinato, a sense of hidden danger. Slow tempo. Instrumental.
+
+crypt: Dark ambient horror score for an ancient crypt: sustained low drones, eerie bowed metal, faint distant choir and slow rumbling percussion. Vast cavernous reverb. Ominous dread, dark and unsettling, dissonant swells and slow creeping menace. Slow tempo. Instrumental.
+
+ancient-ruins: Atmospheric fantasy score for overgrown ancient ruins: soft harp, wooden flute, low strings and gentle chimes, with wind through broken stone. Wide, airy reverb. Mysterious and curious, soft and uncertain, with quiet questioning phrases. Slow tempo. Instrumental.
+
+combat: An excerpt from the middle of the cue, already at full intensity from the first second. Epic orchestral war score for a fantasy battlefield: full orchestra, taiko and war drums, low brass and horns. Huge cinematic stereo mix. Intense, relentless battle music: staccato strings, pounding war drums, blaring brass stabs, aggressive and loud. Fast, driving, 160 BPM. A huge wordless choir sings sustained 'aah' and 'ooh' vowels. Instrumental.
+
+boss-fight: An excerpt from the middle of the cue, already at full intensity from the first second. Grand orchestral score for the great hall of a royal castle: full symphony orchestra, French horns, strings and timpani. Lush concert-hall reverb. Climactic boss battle music: thunderous brass, pounding drums, furious strings, minor key, ever-changing sections. Fast, driving, 160 BPM. A huge wordless choir sings sustained 'aah' and 'ooh' vowels. Instrumental.
+
+victory: Grand orchestral score for the great hall of a royal castle: full symphony orchestra, French horns, strings and timpani. Lush concert-hall reverb. Triumphant and victorious: bright fanfares, soaring melody, major key, celebratory and noble. Medium tempo. A huge wordless choir sings sustained 'aah' and 'ooh' vowels. Instrumental.
+
+bardcore: Upbeat bardcore background music, not tied to any place: catchy folk tunes with a light modern folk-pop groove, already playing from the first bar, about 120 BPM: lute, fiddle, recorder, hurdy-gurdy, acoustic guitar, upright bass and cajon. Warm, lively, intimate sound. Calm and peaceful, gentle and warm, relaxed melody. Medium tempo. Instrumental.
+
+city: Orchestral music for a busy medieval marketplace. Lively and bustling, fast. Woodwinds play a playful, winding melody, with plucked strings and frame drums driving the energetic rhythm underneath. Spacious hall sound. Instrumental.
+
+sea-battle: An excerpt from the middle of the cue, already at full intensity from the first second. Epic orchestral sea battle on a stormy ocean: cannon-fire timpani, war drums, low brass and a fiddle shanty theme. Huge cinematic mix. Intense, relentless battle music: staccato strings, pounding war drums, blaring brass stabs, aggressive and loud. Fast, driving, 160 BPM. A huge wordless choir sings sustained 'aah' and 'ooh' vowels. Instrumental.
+
+cathedral: Sacred music in a soaring gothic cathedral: Gregorian-style wordless male chant, pipe organ and soft strings, candlelit and still. Very long stone reverb. Calm and peaceful, gentle and warm, relaxed melody. Slow tempo. Instrumental.
+
+funeral: Sacred music for a vast stone temple: church organ, soft strings and bells, with a distant wordless choir. Long cathedral reverb. Sad and mournful: slow lament on solo strings, minor key, quiet grief. Slow tempo. A huge wordless choir sings sustained 'aah' and 'ooh' vowels. Instrumental.
+
+funny-combat: Chaotic circus fight music, the band already playing from the first bar: wheezing steam calliope, oompah tuba, bouncing xylophone, slide whistle swoops and honking horns over a galloping fast polka. Cartoon slapstick brawl under the big top, bright and frantic. Fast, driving, 160 BPM. Instrumental.
+
+sexy-battle: Smoky torch-song big-band music in a velvet-curtained nightclub: muted trumpet, breathy tenor saxophone and lush strings over a prowling walking bass and brushed snare that builds into full drums and brass. Slinky, dangerous and glamorous, like a duel with a succubus in a nightclub. Medium tempo. Instrumental.

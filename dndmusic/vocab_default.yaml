@@ -1,0 +1,41 @@
+# Scene → prompt text for Stable Audio 3. Prose works better than tag lists; ~40 words per prompt is the sweet spot.
+# The prompt is: [straight_in] location mood tempo [choir] extra Instrumental.  (at most 70 words)
+# After editing, restart the conductor (docker compose restart conductor). Changed text makes new track pools.
+locations:   # instruments + room sound, one or two sentences
+  tavern: "Rowdy medieval tavern music, the band already playing from the first bar: a folk trio in a crowded wooden inn at night, jaunty fiddle, plucked lute, frame drum, a drinking-song jig. Cosy, dry, close-miked sound with crowd chatter and clinking mugs."
+  town: "Medieval faire music for a busy market square by day, the musicians already playing from the first bar: bagpipes, shawm, hurdy-gurdy, recorder and tabor drum, a festive dance tune. Bright, open outdoor sound."
+  forest road: "Upbeat fantasy adventure music for a journey along an old forest road: lively fiddle and wooden flute over bouncing strings, soft harp and light hand drum at a brisk walking pace. Open, airy outdoor sound."
+  mountain pass: "Cinematic score for a cold, windswept mountain pass: low horns, deep drums and long string lines, with a lone wooden flute. Vast, echoing outdoor space."
+  at sea: "Rousing sea-shanty music aboard a wooden sailing ship: fiddle and tin whistle lead over a steady stomping bodhran beat in swaying 6/8, soft accordion underneath, a tight in-tune band. Open sound with wind and distant waves."
+  castle hall: "Grand orchestral score for the great hall of a royal castle: full symphony orchestra, French horns, strings and timpani. Lush concert-hall reverb."
+  dungeon: "Dark fantasy score for a damp underground dungeon: low string drones, distant metallic scrapes, sparse deep percussion and dripping water. Cold stone reverb."
+  crypt: "Dark ambient horror score for an ancient crypt: sustained low drones, eerie bowed metal, faint distant choir and slow rumbling percussion. Vast cavernous reverb."
+  ancient ruins: "Atmospheric fantasy score for overgrown ancient ruins: soft harp, wooden flute, low strings and gentle chimes, with wind through broken stone. Wide, airy reverb."
+  battlefield: "Epic orchestral war score for a fantasy battlefield: full orchestra, taiko and war drums, low brass and horns. Huge cinematic stereo mix."
+  desert: "Middle Eastern fantasy music for a sun-baked desert: oud, ney flute, frame drums and darbuka over warm strings. Dry, wide open sound."
+  bardcore: "Upbeat bardcore background music, not tied to any place: catchy folk tunes with a light modern folk-pop groove, already playing from the first bar, about 120 BPM: lute, fiddle, recorder, hurdy-gurdy, acoustic guitar, upright bass and cajon. Warm, lively, intimate sound."
+  city: "Bustling fantasy city music for a great walled capital: a festive town band with brass fanfares, strings, lute, recorder and hand drums, with distant bells, grand and busy. Bright, wide outdoor sound."
+  sea battle: "Epic orchestral sea battle on a stormy ocean: cannon-fire timpani, war drums, low brass and a fiddle shanty theme. Huge cinematic mix."
+  cathedral: "Sacred music in a soaring gothic cathedral: Gregorian-style wordless male chant, pipe organ and soft strings, candlelit and still. Very long stone reverb."
+  circus: "Chaotic circus fight music, the band already playing from the first bar: wheezing steam calliope, oompah tuba, bouncing xylophone, slide whistle swoops and honking horns over a galloping fast polka."
+  nightclub: "Smoky torch-song big-band music in a velvet-curtained nightclub: muted trumpet, breathy tenor saxophone and lush strings over a prowling walking bass and brushed snare that builds into full drums and brass."
+  temple: "Sacred music for a vast stone temple: church organ, soft strings and bells, with a distant wordless choir. Long cathedral reverb."
+moods:
+  calm: "Calm and peaceful, gentle and warm, relaxed melody."
+  mysterious: "Mysterious and curious, soft and uncertain, with quiet questioning phrases."
+  tense: "Tense and suspenseful: tremolo strings, low pulsing ostinato, a sense of hidden danger."
+  dread: "Ominous dread, dark and unsettling, dissonant swells and slow creeping menace."
+  combat: "Intense, relentless battle music: staccato strings, pounding war drums, blaring brass stabs, aggressive and loud."
+  boss fight: "Climactic boss battle music: thunderous brass, pounding drums, furious strings, minor key, ever-changing sections."
+  triumphant: "Triumphant and victorious: bright fanfares, soaring melody, major key, celebratory and noble."
+  lively: "Lively and cheerful, bright and bustling, with a sense of adventure."
+  farcical: "Cartoon slapstick brawl under the big top, bright and frantic."
+  seductive: "Slinky, dangerous and glamorous, like a duel with a succubus in a nightclub."
+  sad: "Sad and mournful: slow lament on solo strings, minor key, quiet grief."
+tempos:
+  slow: "Slow tempo."
+  medium: "Medium tempo."
+  fast: "Fast, driving, 160 BPM."
+choir: "A huge wordless choir sings sustained 'aah' and 'ooh' vowels."
+straight_in: "An excerpt from the middle of the cue, already at full intensity from the first second."
+duration_s: [180, 240]

@@ -1,0 +1,9 @@
+{
+  "name": "D&D Music",
+  "short_name": "D&D Music",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#14101f",
+  "theme_color": "#14101f",
+  "icons": [{"src": "/static/icon.svg", "sizes": "any", "type": "image/svg+xml"}]
+}

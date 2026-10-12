@@ -1,0 +1,70 @@
+# Free text -> scene (M4). The DM's words are matched against these ordered lists: the first rule whose
+# words all appear (whole words, lowercase) wins, so put specific phrases before generic ones.
+# Targets must be keys of vocab.yaml; rules pointing at a key you removed are skipped.
+# Copied to <data_dir>/freetext.yaml on first start; edit that copy. Restart the conductor afterwards.
+locations:
+  - {when: [circus, clown, clowns, big top, ringmaster, carnival, jester, jesters], location: circus}
+  - {when: [nightclub, night club, disco, cabaret, burlesque, lounge, succubus, succubi], location: nightclub}
+  - {when: [sea battle, naval battle, naval, pirate ship, ship battle, broadside, cannons, cannon], location: sea battle}
+  - {when: [cathedral, chapel, abbey, monastery], location: cathedral}
+  - {when: [temple, shrine, altar, sanctum], location: temple}
+  - {when: [crypt, crypts, graveyard, cemetery, tomb, tombs, catacombs, mausoleum, burial], location: crypt}
+  - {when: [dungeon, dungeons, cave, caves, cavern, cellar, prison, sewer, sewers, mine, underground], location: dungeon}
+  - {when: [ruins, ruin, ancient ruins, overgrown, excavation], location: ancient ruins}
+  - {when: [battlefield, warfield, siege, war, army, armies], location: battlefield}
+  - {when: [ship, ships, ocean, sea, sailing, voyage, harbor, harbour, docks, pirates, pirate, deck], location: at sea}
+  - {when: [throne room, palace, castle, great hall, royal court, court, keep], location: castle hall}
+  - {when: [city, capital, metropolis, citadel], location: city}
+  - {when: [tavern, taverns, inn, pub, bar, alehouse, brothel, tap room, taproom], location: tavern}
+  - {when: [mountain, mountains, pass, peak, cliffs, cliff, snowy, glacier], location: mountain pass}
+  - {when: [desert, dunes, oasis, sand, sands, wasteland], location: desert}
+  - {when: [forest road, road, forest, woods, wood, trail, path, jungle, swamp, journey, travel, travelling, traveling], location: forest road}
+  - {when: [bard, bardcore, minstrel, minstrels, song, songs, music, tune, folk, jig], location: bardcore}
+  - {when: [town, village, market, marketplace, square, fair, festival, bazaar], location: town}
+
+moods:
+  - {when: [funny, silly, slapstick, comedy, comic, farce, farcical, goofy, clownish, zany], mood: farcical}
+  - {when: [sexy, seductive, sultry, seduction, flirt, flirting, succubus, succubi, burlesque, glamorous], mood: seductive}
+  - {when: [boss fight, boss battle, boss, final battle, dragon fight, dragon], mood: boss fight}
+  - {when: [fight, fights, fighting, attack, attacked, ambush, ambushed, battle, duel, combat, skirmish, brawl, clash, war, assault, raid, charge, chase], mood: combat}
+  - {when: [dread, horror, terror, haunted, undead, ghost, ghosts, zombie, zombies, nightmare, ominous, creepy, demon, lich, vampire], mood: dread}
+  - {when: [tense, tension, suspense, stealth, sneaking, sneak, heist, infiltrate, infiltration, trap, danger, dangerous, hunted, lurking], mood: tense}
+  - {when: [sad, sorrow, mourning, mournful, funeral, grief, lament, death, farewell, loss, tragic, tragedy], mood: sad}
+  - {when: [triumphant, victory, victorious, triumph, celebrate, celebration, coronation, won, win, hero, heroes, glory, fanfare], mood: triumphant}
+  - {when: [mysterious, mystery, strange, curious, eerie, arcane, magic, magical, enchanted, puzzle, riddle, wonder, fey, whispers], mood: mysterious}
+  - {when: [lively, cheerful, festive, party, dance, dancing, drinking, merry, rowdy, jolly, bustling, happy, fun, tavern brawl], mood: lively}
+  - {when: [calm, peaceful, quiet, rest, resting, camp, campfire, relax, relaxing, serene, gentle, sleep, safe, lullaby], mood: calm}
+
+tempos:
+  - {when: [frantic, chase, race, racing, fast, hurry, run, running, escape, fleeing, rushing, urgent, gallop], tempo: fast}
+  - {when: [slow, slowly, crawl, crawling, creeping, creep, funeral, solemn, still, lingering, drifting], tempo: slow}
+
+# Used when no tempo word matched; moods not listed are medium.
+mood_tempo:
+  combat: fast
+  boss fight: fast
+  lively: fast
+  dread: slow
+  sad: slow
+  farcical: fast
+
+# Choir on: any of these words, or the mood is in choir_moods.
+choir:
+  words: [epic, holy, divine, chant, chanting, choir, sacred, prayer, angelic, heavenly, boss, dragon, funeral, requiem, hymn, ritual]
+choir_moods: [combat, boss fight, triumphant]
+
+# start=straight (straight-in prompt, build-up cut): these moods, or any of these words.
+straight_moods: [combat, boss fight]
+straight_words: [ambush, ambushed, suddenly, charge, charges, charging, sudden, surprise, assault]
+
+defaults:
+  location: bardcore
+  mood: calm
+  tempo: medium
+
+# The DM's words kept in scene.extra: at most this many words / characters (whole words only).
+# 9, not 12: a straight-in scene on a mid-length location (mountain pass + combat) loses its mood
+# sentence to the 70-word cap above 9 extra words. Long locations (tavern, bardcore, at sea, forest road,
+# town, city) lose it in straight scenes at any cap; that is scene_prompt's trimming, not a rules issue.
+extra_max_words: 9
+extra_max_chars: 120

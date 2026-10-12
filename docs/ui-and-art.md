@@ -1,0 +1,15 @@
+# Retro UI and backgrounds
+
+- **Look:** night-violet ground, gold-framed panels, a pixel font, hard shadows, no blur or rounded corners. It stays legible at phone width (checked down to 280 px).
+- **Backgrounds:** each of the 18 art sets (the 19 starter scenes; Village (Troubled) borrows `town`) has 4 pixel-art images (102 files in all with the generic ones). When the playing music belongs to a scene, the page cross-fades (2 s) to a random image of it on every track change; with reduced-motion set it just swaps. Nothing playing: plain ground.
+- **Generic art:** a renamed or unsaved Custom scene first gets the set of the starter scene with the same location and mood (then same location); only when nothing matches, or the scene has no images, does it get one of 12 generic bardcore images. Each scene card and the top bar show the scene's 64 px object icon.
+- **Picker-only sets:** 15 more icon + background sets (`wilderness-camp`, `magic-academy`, `swamp`, `desert-caravan`, `frozen-north`, `royal-court`, `thieves-guild`, `dragons-lair`, `fey-wild`, `underdark`, `haunted-house`, `sky-and-planes`, `haunted-forest`, `hades`, `grasslands`) have no starter scene and no music. A scene picks one in the editor's "Icon and background" row (the slug is shown under each icon); the server accepts any slug in `bg/manifest.json`. Their prompts, seeds (6000+) and icons are under `extra_sets` / `extra_icons` / `extra_people` in `art/prompts.yaml`; `make_backgrounds.py` and `promote_backgrounds.py` treat them like the starter sets.
+- **Desktop set:** `dndmusic/static/bg-hd/` holds a 1920x1080 copy of every background (no icons) at the same relative path as the manifest. Pages at least 900 px wide load it, falling back to the 512 px image. Rendered 1344x768 through the same prompts and seeds, averaged to a 480x270 pixel grid, quantised to 32 colours, then x4 nearest-neighbour; flat letterbox bars SDXL draws are trimmed first; lossless WebP, about 35 KB each, 20 MB cap for the directory (a test enforces it). Refresh: `scripts/make_backgrounds.py --comfy URL --round N --wide [--only slug:n]`, then `scripts/promote_backgrounds.py --hd <dir>`.
+- **Budget:** 512 px square, WebP, at most 60 KB per image and 8 MB for all of `dndmusic/static/bg/` (32 icon + background sets) (a test enforces it). Pages load only the images of the playing scene.
+- **Refine the art** (needs ComfyUI with the SDXL checkpoint and pixel-art-xl LoRA; see [art/README.md](../art/README.md)):
+  1. Edit the prompt or seed of the image in `art/prompts.yaml`.
+  2. Re-render only that image into a new round directory:
+     `scripts/make_backgrounds.py --comfy http://127.0.0.1:8188 --round 6 --only at-sea:3 generic:5 icon:at-sea`
+     (look at the `sheet-<slug>.png` contact sheets and `notes.txt` in the round directory).
+  3. Promote approved rounds, listed in precedence order (the last directory that has an image wins; the list is the approval):
+     `scripts/promote_backgrounds.py R2 R3 R4 R5 R6`, then commit `dndmusic/static/bg/`.

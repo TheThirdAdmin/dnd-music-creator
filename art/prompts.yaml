@@ -1,0 +1,227 @@
+# Background art prompts for M3.
+# Characters sit in the centre 55% and interact with the place. The 4 images of a set differ in time of day, camera or weather, not subject.
+style: "16-bit pixel art, SNES fantasy RPG background, limited palette, dithering, no text, no characters in the foreground, centred composition, full-bleed scene filling the whole frame"
+style_people: "16-bit pixel art, SNES fantasy RPG scene, limited palette, dithering, no text, small characters in the centre of the frame interacting with the environment, full-bleed scene filling the whole frame"
+people: [tavern-night, town, forest-travel, mountain-pass, at-sea, dungeon, crypt, ancient-ruins, combat, boss-fight, victory, bardcore, city, sea-battle, cathedral, funeral, funny-combat, sexy-battle]   # sets that use style_people: characters are the story
+negative: "photo, 3d render, text, watermark, ui, border, frame, picture frame, white border, black bars, letterbox, blurry, anti-aliased, smooth gradient"
+sets:
+  tavern-night:  # Tavern night (tavern)
+    - {seed: 1101, prompt: "busy medieval tavern interior, crowded tables of cheerful patrons raising tankards, bard with a lute by the hearth, wooden beams, warm candlelight, late night"}
+    - {seed: 1162, prompt: "medieval tavern interior seen from the doorway, packed with many laughing patrons at the bar and tables, a barkeep, hanging lanterns, glowing hearth, lively midnight"}  # round 5: was 1152, too few people
+    - {seed: 1153, prompt: "medieval tavern interior from above, room packed with patrons at round tables, a dancing couple, barrels, candles, firelight, floor filling the whole frame"}  # round 3: was 1103, white border
+    - {seed: 1104, prompt: "medieval tavern interior, rain on leaded windows, patrons huddled around the hearth, a serving maid with a tray, lantern light, stormy night"}
+  town:  # Town (town)
+    - {seed: 1201, prompt: "adventurers and townsfolk chatting by the central well of a medieval town square, timber houses, market stalls, early morning light"}
+    - {seed: 1202, prompt: "a party of adventurers buying goods from a market stall in a medieval town square, townsfolk around, timber houses, warm afternoon sun"}
+    - {seed: 1203, prompt: "adventurers resting on the well steps in a medieval town square, townsfolk passing, timber houses, golden sunset"}
+    - {seed: 1204, prompt: "adventurers sheltering under a stall awning in a medieval town square, townsfolk with umbrellas, wet cobblestones, grey rain"}
+  forest-travel:  # Forest travel (forest road)
+    - {seed: 1301, prompt: "a party of adventurers walking a dirt road through an old green forest, one pointing ahead, tall oaks, dappled sunlight, calm morning"}
+    - {seed: 1302, prompt: "adventurers leading pack horses along a forest road, mist between old oaks, soft dawn light"}
+    - {seed: 1303, prompt: "adventurers making camp beside a forest road, one tending a small fire, old oaks, low golden evening sun"}
+    - {seed: 1304, prompt: "cloaked adventurers trudging along a forest road in light rain, old oaks, wet leaves, dim grey daylight"}
+  mountain-pass:  # Mountain pass (mountain pass)
+    - {seed: 1401, prompt: "a party of adventurers climbing a narrow rocky mountain pass, one helping another up, snowy peaks, cold clear daylight"}
+    - {seed: 1402, prompt: "adventurers roped together on a narrow mountain pass, heavy fog, pale dawn, snowy peaks"}
+    - {seed: 1403, prompt: "adventurers huddled in cloaks against blowing snow on a narrow mountain pass, dark storm clouds, jagged peaks"}
+    - {seed: 1404, prompt: "adventurers resting on a narrow mountain pass, pointing at the view, red sunset on the summits, long shadows"}
+  at-sea:  # At sea (at sea)
+    - {seed: 1551, prompt: "sailors and adventurers on the deck of a small sailing ship, one at the wheel, one pointing at the horizon, open sea, bright calm day, sky filling the frame"}  # round 5: was 1501, framing arch
+    - {seed: 1502, prompt: "adventurers leaning on the rail of a small sailing ship, sailors hauling ropes, sunset with orange and violet clouds"}
+    - {seed: 1503, prompt: "adventurers and a sailor around a lantern on a ship's deck, moonlit night, silver water"}
+    - {seed: 1504, prompt: "sailors coiling ropes while adventurers watch the horizon from a small sailing ship, grey swells, morning haze"}
+  dungeon:  # Dungeon (dungeon)
+    - {seed: 1601, prompt: "a party of adventurers with torches exploring a stone dungeon corridor, one peering into a cell, iron bars, damp floor"}
+    - {seed: 1602, prompt: "adventurers picking the lock of an iron dungeon door, one holding a torch, arched ceiling, deep shadows"}
+    - {seed: 1603, prompt: "adventurers at a dungeon crossing, one studying a map by torchlight, arched ceiling, iron doors, dripping water"}
+    - {seed: 1604, prompt: "adventurers creeping down a dungeon corridor by cold blue lantern light, one with a raised shield, puddles and mist"}
+  crypt:  # Crypt (crypt)
+    - {seed: 1701, prompt: "adventurers with a lantern between rows of sarcophagi in a stone crypt, one reading an inscription, cobwebs, pale green candle glow"}
+    - {seed: 1752, prompt: "a party of adventurers prying open a sarcophagus lid in a stone crypt, single beam of moonlight from above, stone walls filling the whole frame"}  # round 5: was 1702, dark vignette border
+    - {seed: 1703, prompt: "adventurers descending crypt stairs with torches, rows of sarcophagi below, faint blue light, drifting fog"}
+    - {seed: 1704, prompt: "adventurers huddled around a dying candle in a stone crypt, sarcophagi, cobwebs, thick dust, near darkness"}
+  ancient-ruins:  # Ancient ruins (ancient ruins)
+    - {seed: 1801, prompt: "adventurers examining glowing runes on a broken column in an ancient ruined temple, moss, fallen arches, soft morning light"}
+    - {seed: 1802, prompt: "a party of adventurers gathered around a glowing rune circle in ancient ruins, broken columns, starry night sky"}
+    - {seed: 1803, prompt: "adventurers climbing over fallen arches in an ancient ruined temple, one holding a torch, thick drifting mist"}
+    - {seed: 1804, prompt: "adventurers resting in the shade of broken columns in ancient ruins, one sketching runes, hot noon sun, cracked paving"}
+  combat:  # Combat (battlefield)
+    - {seed: 1951, prompt: "adventurers locked in melee with soldiers in the centre of a muddy battlefield, swords clashing, torn banners, smoke on the horizon, red afternoon sky"}  # round 5: was 1901, too little combat
+    - {seed: 1952, prompt: "adventurers back to back in the centre of a muddy battlefield, surrounded by enemies, swords raised, burning wagons, dusk with orange glow"}  # round 5: was 1902, too little combat
+    - {seed: 1903, prompt: "a shield wall of adventurers holding the line on a muddy battlefield, rain and grey smoke, dark clouds"}
+    - {seed: 1954, prompt: "adventurers charging down a muddy slope into a battlefield melee, banners raised, dawn haze, distant fires, mud filling the whole frame"}  # round 5: was 1904, white corners, reads as a map
+  boss-fight:  # Boss fight (castle hall)
+    - {seed: 2001, prompt: "a party of adventurers facing a huge dark armoured warlord in a castle throne hall, tall pillars, red banners, burning braziers"}
+    - {seed: 2002, prompt: "adventurers advancing along a red carpet toward a towering horned boss on its throne, castle throne hall, braziers"}
+    - {seed: 2003, prompt: "adventurers dodging a lightning blast from a robed sorcerer lord, castle throne hall, tall pillars, stained window with storm"}
+    - {seed: 2004, prompt: "adventurers clashing with a huge boss amid purple magic haze, cracked floor, castle throne hall, tall pillars, red banners"}
+  victory:  # Victory (castle hall)
+    - {seed: 2101, prompt: "a party of adventurers raising swords and cheering in a grand castle hall, golden banners, sunbeams through high windows"}
+    - {seed: 2102, prompt: "adventurers feasting at long tables in a grand castle hall, raising goblets, golden banners, warm torchlight, evening"}
+    - {seed: 2103, prompt: "adventurers kneeling before a king who honours them in a grand castle hall, golden banners, red carpet, bright morning rays"}
+    - {seed: 2104, prompt: "adventurers laughing and embracing in a grand castle hall, falling petals, golden banners, glowing late afternoon light"}
+  bardcore:  # Bardcore (bardcore)
+    - {seed: 2201, prompt: "a bard playing a lute on a wooden stage before a cheering crowd on a medieval village green, bunting, sunny afternoon"}
+    - {seed: 2202, prompt: "a bard and a drummer performing on a small wooden stage, villagers dancing, bunting, golden evening, rolling hills"}
+    - {seed: 2203, prompt: "a bard singing on a small stage lit by lanterns, villagers clapping, starry night, rolling hills"}
+    - {seed: 2204, prompt: "a bard tuning a lute on a small wooden stage while villagers gather, bunting, overcast morning, rolling hills"}
+  city:  # City (city)
+    - {seed: 2301, prompt: "adventurers and citizens in a busy medieval city street, an adventurer haggling at a stall, tall timber houses, hanging signs, bright midday"}
+    - {seed: 2302, prompt: "adventurers walking through a busy medieval city street, citizens and carts, tall timber houses, warm evening lantern light"}
+    - {seed: 2303, prompt: "adventurers looking out over a medieval city from a hill, one pointing at the towers, river and stone bridge, morning"}
+    - {seed: 2304, prompt: "adventurers hurrying through a medieval city street in light rain, citizens with hoods, hanging signs, wet cobbles"}
+  sea-battle:  # Sea battle (sea battle)
+    - {seed: 2401, prompt: "adventurers and sailors fighting boarders on a ship's deck, torn sails, cannon smoke, big waves, dark clouds"}
+    - {seed: 2402, prompt: "adventurers swinging on a rope between two wooden warships, cannon smoke, big waves, burning mast, sunset glow"}
+    - {seed: 2403, prompt: "adventurers and sailors firing a cannon on a stormy sea at night, torn sails, lightning, big waves"}
+    - {seed: 2404, prompt: "adventurers and sailors beating back enemies on a deck, grey dawn, big waves, drifting wreckage"}
+  cathedral:  # Cathedral (cathedral)
+    - {seed: 2551, prompt: "adventurers kneeling in prayer in a vast stone cathedral, a priest blessing them, gothic arches, stained glass, colourful light beams"}  # round 5: was 2501, 61 KB, over budget
+    - {seed: 2502, prompt: "adventurers walking down the nave of a vast stone cathedral toward a robed priest, empty pews, candles on the altar"}
+    - {seed: 2503, prompt: "adventurers lighting candles in a vast stone cathedral, gothic arches, dust in golden sunbeams"}
+    - {seed: 2504, prompt: "adventurers and a priest around hundreds of candles in a vast stone cathedral, deep night, blue window light"}
+  funeral:  # Funeral (temple)
+    - {seed: 2601, prompt: "mourning adventurers and a priest gathered around a stone bier with white lilies in a quiet temple courtyard, pale morning light"}
+    - {seed: 2602, prompt: "adventurers holding candles around a stone bier of white lilies in a temple courtyard, soft rain"}
+    - {seed: 2603, prompt: "an adventurer laying a lily on a stone bier while others bow their heads, temple courtyard, dusk, violet sky"}
+    - {seed: 2604, prompt: "adventurers standing in silence around a stone bier with white lilies, temple hall, falling leaves, mist"}
+  funny-combat:  # Funny combat (circus)
+    - {seed: 3101, prompt: "circus big top interior, a clown swinging a rubber chicken at an armoured knight, flying juggling pins and custard pies, a tumbling unicycle, sawdust ring, striped red and yellow tent"}
+    - {seed: 3102, prompt: "circus ring brawl, an adventurer dodging a strongman, a cannon firing confetti, balloons, cream pies mid-air, a startled lion on a stool, bright striped tent"}
+    - {seed: 3103, prompt: "carnival midway slapstick fight, goblins and a knight chasing a ringmaster, a tipped cart of fruit, bunting, rainbow banners, comic chaos, sunny afternoon"}
+    - {seed: 3104, prompt: "circus big top interior seen from above the ring, a clown swinging a rubber chicken at an armoured knight, flying juggling pins and custard pies, spotlights, striped red and yellow tent, evening show"}
+  sexy-battle:  # Sexy battle (nightclub)
+    - {seed: 3201, prompt: "a succubus with curved horns in a flowing red dress and a swashbuckling hero crossing swords on a nightclub stage, crimson velvet curtains, glittering disco ball, rose petals falling, pink and purple spotlights"}
+    - {seed: 3202, prompt: "a hero fencing a seductive winged succubus in a lavish gold and crimson ballroom, candle chandeliers, silk drapes, scattered roses, soft pink glow"}
+    - {seed: 3203, prompt: "a swashbuckling hero and a charming devil lady sword dancing on a moonlit balcony, swirling red cape, rose petals, a grand piano and a saxophone, romantic magenta sky"}
+    - {seed: 3205, prompt: "a succubus with curved horns in a flowing red dress and a swashbuckling hero crossing swords on a nightclub stage seen from the back of the room, red velvet curtains, disco ball, blue and violet spotlights, smoky haze"}
+icon_style: "pixel art, cute game item icon of {subject}, single object, thick dark outline, bold simple shapes, flat shading, centred, plain solid background"
+icon_negative: "photo, 3d render, text, scenery, landscape, multiple objects, border, frame, blurry, gradient, realistic"
+icons:  # one cute single object per starter scene, background keyed to transparent, shown at 64x64
+  tavern-night: {seed: 5001, subject: "a wooden ale barrel with a foamy tankard on top"}
+  town: {seed: 5002, subject: "a small timber cottage with a chimney"}
+  forest-travel: {seed: 5003, subject: "a round green oak tree"}
+  mountain-pass: {seed: 5004, subject: "a snowy mountain peak"}
+  at-sea: {seed: 5005, subject: "a ship's anchor"}
+  dungeon: {seed: 5006, subject: "an iron dungeon key"}
+  crypt: {seed: 5007, subject: "a grinning skull"}
+  ancient-ruins: {seed: 5008, subject: "a broken stone column"}
+  combat: {seed: 5009, subject: "two crossed swords"}
+  boss-fight: {seed: 5010, subject: "a red dragon head"}
+  victory: {seed: 5011, subject: "a golden crown"}
+  bardcore: {seed: 5012, subject: "a lute"}
+  city: {seed: 5013, subject: "a tall castle tower with a flag"}
+  sea-battle: {seed: 5014, subject: "a wooden warship with cannons"}
+  cathedral: {seed: 5015, subject: "a church bell"}
+  funeral: {seed: 5016, subject: "a white lily"}
+  funny-combat: {seed: 5101, subject: "a squeaky rubber chicken"}
+  sexy-battle: {seed: 5201, subject: "a red rose with a small sword"}
+generic:  # 12 bardcore-style backgrounds for renamed, custom and free-text scenes (generic-01..12)
+  - {seed: 9001, prompt: "castle on a cliff at dusk, tall towers, pennants, winding road, orange and violet sky"}
+  - {seed: 9002, prompt: "hill road with a distant castle, wildflowers, fence posts, bright afternoon, minstrel's path"}
+  - {seed: 9003, prompt: "wooden feast hall, long tables with food and goblets, hanging banners, roaring fireplace, empty"}
+  - {seed: 9004, prompt: "old stone bridge over a clear river, green meadow, small waterwheel, soft morning mist"}
+  - {seed: 9005, prompt: "village fair, striped tents, bunting, wooden stalls, empty trampled grass, sunny day"}
+  - {seed: 9006, prompt: "moonlit lake, reeds, small wooden jetty, one rowing boat, stars, fireflies"}
+  - {seed: 9007, prompt: "open field with rows of colourful banners on poles, rolling hills, windy golden hour"}
+  - {seed: 9008, prompt: "stone cloister garden, arched walkways, fountain in the middle, climbing roses, quiet noon"}
+  - {seed: 9009, prompt: "windmill on a green hill, wheat field, dirt path, big white clouds, warm summer day"}
+  - {seed: 9010, prompt: "bonfire camp in a clearing, log seats, lute leaning on a log, tents, stars overhead"}
+  - {seed: 9011, prompt: "blacksmith forge, glowing anvil, hanging tools, stone chimney, sparks, dim warm interior"}
+  - {seed: 9012, prompt: "wizard library tower interior, spiral stairs, tall bookshelves, candles, round window, dust in light"}
+
+# --- icon sets with no starter scene (picker only); added 2026-10-12 ---
+# Seeds: set k (1-based, file order) uses 6000+100*k+j; icons 5301+. Same rules as `sets`.
+extra_sets:
+  wilderness-camp:
+    - {seed: 6151, prompt: "adventurers resting around a crackling campfire in a forest clearing, tents, bedrolls, a cooking pot, one keeping watch, starry night sky"}
+    - {seed: 6102, prompt: "adventurers breaking camp at dawn beside a smouldering fire, mist between pine trees, packing bedrolls, warm pink light"}
+    - {seed: 6103, prompt: "adventurers sheltering under a canvas awning at camp in heavy rain, a small fire, glistening mud, lanterns, stormy dusk"}
+    - {seed: 6104, prompt: "adventurers around a campfire seen from above, circle of tents, logs as seats, sparks rising, clearing in a dark forest"}
+  magic-academy:
+    - {seed: 6201, prompt: "wizard apprentices in a grand vaulted library, towering bookshelves, floating candles, glowing tomes, a teacher at a lectern, warm amber light"}
+    - {seed: 6202, prompt: "apprentices brewing potions in an alchemy laboratory, bubbling glass flasks, hanging herbs, a cauldron with green steam"}
+    - {seed: 6203, prompt: "wizards at an observatory dome on a tower roof, brass telescope and star charts, glowing constellations, night sky"}
+    - {seed: 6204, prompt: "apprentices practising spells in a stone courtyard, floating orbs and sparks, banners, an arched cloister, bright morning"}
+  swamp:
+    - {seed: 6301, prompt: "misty swamp at dusk, wooden boardwalk, gnarled cypress trees, hanging moss, glowing will-o'-wisps, murky green water"}
+    - {seed: 6302, prompt: "witch's stilt hut above a dark bog, lantern light in the windows, rickety bridge, fog, croaking frogs, night"}
+    - {seed: 6303, prompt: "overgrown swamp at dawn, flat boat among reeds, pale sunlight through mist, lily pads, dragonflies"}
+    - {seed: 6304, prompt: "swamp in a thunderstorm, twisted trees, rippling rain on black water, a distant lantern, flashes of lightning"}
+  desert-caravan:
+    - {seed: 6401, prompt: "merchant caravan of camels crossing golden dunes at sunset, travellers in robes, long shadows, a distant oasis"}
+    - {seed: 6402, prompt: "busy desert bazaar under striped awnings, spice sacks, brass lamps, merchants and shoppers, hot noon light"}
+    - {seed: 6403, prompt: "oasis camp at night, tents around palm trees and a pool, a small fire, bright stars, a moon over dunes"}
+    - {seed: 6404, prompt: "caravan struggling through a sandstorm, wrapped travellers, camels, swirling orange sand, dim red sun"}
+  frozen-north:
+    - {seed: 6501, prompt: "adventurers trekking through a blizzard on a snowy mountainside, furs, bent against the wind, swirling white snow, pine trees"}
+    - {seed: 6502, prompt: "warriors feasting in a timber longhouse, roaring fire pit, long tables, antler trophies, round shields on the walls"}
+    - {seed: 6503, prompt: "party exploring a glittering ice cave, blue crystal walls, frozen waterfall, lanterns, breath misting in the cold"}
+    - {seed: 6504, prompt: "snowy fjord village at night under green and violet aurora, longships on frozen water, smoking chimneys"}
+  royal-court:
+    - {seed: 6601, prompt: "grand throne room, a king and queen on golden thrones, courtiers in rich robes, red carpet, tall banners, sunbeams from stained glass"}
+    - {seed: 6602, prompt: "royal banquet in a great hall, long feasting table, goblets, roast boar, nobles and a jester, chandeliers, candlelight"}
+    - {seed: 6603, prompt: "masked ball in a marble ballroom, dancing nobles in feathered masks, crystal chandeliers, gold and violet gowns"}
+    - {seed: 6604, prompt: "quiet war room at night, advisers around a large map table, candles, tokens and flags, tapestries, tense mood"}
+  thieves-guild:
+    - {seed: 6701, prompt: "rooftops of a medieval city at night, a hooded thief crouching by a chimney, moonlit slate roofs, laundry lines, lanterns below"}
+    - {seed: 6702, prompt: "smoky back-alley tavern, hooded rogues at corner tables, dice and coins, a hidden door, dim red lantern light"}
+    - {seed: 6703, prompt: "sewer hideout under the city, stone tunnels, dripping water, a thieves' table piled with loot, torches, green glow"}
+    - {seed: 6704, prompt: "heist inside a nobleman's treasury, a rogue picking a lock, chests of gold, a guard asleep, a moonbeam through a window"}
+  dragons-lair:
+    - {seed: 6801, prompt: "vast cavern filled with a mountain of gold coins and jewels, a giant red dragon sleeping on top, torch-like glow"}
+    - {seed: 6802, prompt: "dragon flying over a jagged mountain ridge at sunset, spread wings, fiery clouds, a distant burning village"}
+    - {seed: 6803, prompt: "ruined castle keep scorched by dragon fire, broken towers, smoke and embers, glowing cracks, ash falling, dark orange sky"}
+    - {seed: 6804, prompt: "dragon's lair entrance carved in a cliff, huge skull above the door, lava glow inside, scattered bones, twilight"}
+  fey-wild:
+    - {seed: 6901, prompt: "twilight forest glade of giant glowing mushrooms, floating lights, tiny faeries, ferns, purple and teal mist"}
+    - {seed: 6902, prompt: "faerie court on a moss-covered stage beneath a huge ancient tree, lantern fireflies, blossom petals, silver moonlight"}
+    - {seed: 6903, prompt: "moonlit pond with giant lily pads, glowing blue flowers, dragonflies, a stone bridge, soft sparkles"}
+    - {seed: 6904, prompt: "enchanted meadow at dawn, rainbow-coloured flowers, floating dandelion seeds, a rope swing, golden mist"}
+  underdark:
+    - {seed: 7001, prompt: "underground cavern of enormous glowing fungi, adventurers with lanterns on a narrow path, blue and violet light, dripping stalactites"}
+    - {seed: 7002, prompt: "dark elf city carved into a vast cavern wall, spiral towers, purple fires, winding stairs, a spider-web bridge"}
+    - {seed: 7003, prompt: "river of lava winding through a black cave, stone bridge, red glow on the walls, drifting embers, small party crossing"}
+    - {seed: 7004, prompt: "still underground lake with a crystal island, pale blue light, a rowing boat, hanging stalactites, shimmering water"}
+  haunted-house:
+    - {seed: 7101, prompt: "gloomy Victorian manor at night under a full moon, crooked windows with a single lit candle, bare trees, wrought-iron gate"}
+    - {seed: 7102, prompt: "manor entrance hall, a dusty staircase, torn curtains, cobwebs, a ghost drifting by a candelabra, pale blue light"}
+    - {seed: 7103, prompt: "overgrown graveyard behind the house, leaning tombstones, mist, a crow on a statue, glowing green wisps"}
+    - {seed: 7104, prompt: "attic full of covered furniture, an old rocking horse, a moonlit round window, floating dust, a trunk glowing faintly"}
+  sky-and-planes:
+    - {seed: 7201, prompt: "airship with patched balloon sailing above a sea of clouds at sunrise, rope rigging, propellers, a distant floating island"}
+    - {seed: 7202, prompt: "castle on a floating island among golden clouds, waterfalls spilling into the sky, bridges between rocks, birds"}
+    - {seed: 7203, prompt: "swirling portal rift between worlds, torn sky, purple and gold lightning, floating rock fragments, a stone ring gate"}
+    - {seed: 7204, prompt: "airship deck in a storm, billowing sails, lightning in dark clouds, crew lanterns, spray of rain, tilted horizon"}
+  haunted-forest:
+    - {seed: 7301, prompt: "dark twisted forest at night, gnarled trees with glowing eyes in the bark, thin fog, a narrow path, cold blue moonlight"}
+    - {seed: 7302, prompt: "ghostly lanterns floating among dead trees, a ruined chapel in the distance, pale mist over the ground, eerie green light"}
+    - {seed: 7303, prompt: "autumn forest at dusk, bare black branches like claws, a scarecrow in a clearing, crows, deep orange and purple sky"}
+    - {seed: 7304, prompt: "forest swallowed by whispering fog, a wooden bridge over a black stream, hanging charms and bones, dim cold dawn"}
+  hades:
+    - {seed: 7461, prompt: "ghoulish black pond of the underworld, pale ghostly hands rising from the water, green flames on the shore, dead twisted trees, a huge erupting volcano glowing red in the background, ash sky"}
+    - {seed: 7402, prompt: "the gates of Hades, huge iron doors flanked by statues, a three-headed dog guarding, red glowing sky, ash"}
+    - {seed: 7403, prompt: "asphodel fields of the underworld, grey wandering shades, pale flowers, a distant dark palace, dim silver light"}
+    - {seed: 7404, prompt: "throne hall of Hades, a dark king on a throne of black stone, ghostly braziers burning blue, pillars of bone and gold"}
+  grasslands:
+    - {seed: 7511, prompt: "windswept prairie at midday, vast flat golden grassland filling the frame, grass bending in the wind, a tiny lone oak on the far horizon, huge white cumulus clouds, wide open blue sky"}
+    - {seed: 7502, prompt: "open plains at dusk, long amber grass rippling, a winding dirt trail, a distant herd of bison in silhouette, orange and purple sky"}
+    - {seed: 7513, prompt: "wild untamed prairie under a storm, tall uneven windblown grass, no fields or rows, dark storm front, a distant curtain of rain, lightning on the horizon"}
+    - {seed: 7504, prompt: "dawn on rolling green plains, pale mist in the hollows, wildflowers, wagon ruts in the grass, a distant rider on a ridge"}
+extra_icons:
+  wilderness-camp: {seed: 5301, subject: "a small campfire with a cooking pot"}
+  magic-academy: {seed: 5302, subject: "an open glowing spellbook"}
+  swamp: {seed: 5303, subject: "a hanging lantern glowing green"}
+  desert-caravan: {seed: 5304, subject: "a camel with a saddle"}
+  frozen-north: {seed: 5305, subject: "a snowflake crystal"}
+  royal-court: {seed: 5306, subject: "a golden goblet"}
+  thieves-guild: {seed: 5307, subject: "a dagger crossed with a lock pick"}
+  dragons-lair: {seed: 5308, subject: "a pile of gold coins with a gem"}
+  fey-wild: {seed: 5309, subject: "a glowing blue mushroom"}
+  underdark: {seed: 5310, subject: "a glowing purple crystal cluster"}
+  haunted-house: {seed: 5311, subject: "a floating white ghost with a candle"}
+  sky-and-planes: {seed: 5312, subject: "a small airship with a balloon"}
+  haunted-forest: {seed: 5313, subject: "a dead twisted tree with glowing eyes"}
+  hades: {seed: 5314, subject: "a bronze obol coin with a skull stamped on it"}
+  grasslands: {seed: 5315, subject: "a golden wheat sheaf tied with a ribbon"}
+extra_people: [wilderness-camp, magic-academy, desert-caravan, frozen-north, royal-court, thieves-guild, underdark, hades]

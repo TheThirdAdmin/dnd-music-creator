@@ -1,0 +1,64 @@
+x-generator: &generator
+  build:
+    context: .
+    dockerfile: docker/generator.Dockerfile
+  user: "${APP_UID:-1000}:${APP_GID:-1000}"
+  ports:
+    - "${GENERATOR_BIND:-127.0.0.1}:${GENERATOR_PORT:-8001}:8001"
+  volumes:
+    - "models:/models"
+  restart: unless-stopped
+  init: true
+  stop_grace_period: 20s
+
+services:
+  conductor:
+    build:
+      context: .
+      dockerfile: docker/conductor.Dockerfile
+    network_mode: host
+    user: "${APP_UID:-1000}:${APP_GID:-1000}"
+    environment:
+      PORT: "${PORT:-8000}"
+      GENERATOR_URLS: "${GENERATOR_URLS:-http://localhost:${GENERATOR_PORT:-8001}}"
+      PUBLIC_URL: "${PUBLIC_URL:-}"
+      HOST_DATA_PATH: "${DATA_PATH:-./data}"
+      DM_PASSWORD: "${DM_PASSWORD:-on}"
+      HOME: /tmp
+    volumes:
+      - "${DATA_PATH:-./data}:/data"
+    restart: unless-stopped
+
+  fake-generator:
+    profiles: ["fake"]
+    build:
+      context: .
+      dockerfile: docker/fakegen.Dockerfile
+    ports:
+      - "127.0.0.1:${GENERATOR_PORT:-8001}:8001"
+    environment:
+      FAKEGEN_DELAY_S: "2"
+      FAKEGEN_MAX_DURATION: "60"
+    restart: unless-stopped
+
+  generator:
+    <<: *generator
+    profiles: ["gpu"]
+    environment:
+      GENERATOR_DEVICE: gpu
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["${GENERATOR_GPU:-0}"]
+              capabilities: [gpu]
+
+  generator-cpu:
+    <<: *generator
+    profiles: ["cpu"]
+    environment:
+      GENERATOR_DEVICE: cpu
+
+volumes:
+  models:

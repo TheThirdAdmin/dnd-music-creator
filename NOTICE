@@ -1,0 +1,10 @@
+dnd-music-creator
+
+This Stability AI Model is licensed under the Stability AI Community License, Copyright © Stability AI Ltd. All Rights Reserved.
+
+The music generator downloads Stable Audio 3 Medium and Stable Audio 3 Small Music (Comfy-Org repackaged files) on its
+first start and uses them under that licence; the agreement is in generator/LICENSE-STABILITY-AI.md. Music you generate,
+including the bundled starter pack, is yours. Powered by Stability AI.
+
+ComfyUI (https://github.com/comfyanonymous/ComfyUI, GPL-3.0) is included unmodified in the generator image and used only
+over HTTP as a separate program.

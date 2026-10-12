@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14101f">
+<title>D&amp;D Music</title>
+<link rel="manifest" href="/static/manifest.webmanifest">
+<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+<link rel="preload" href="/static/fonts/PixelifySans-subset.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div id="bgA" class="bg" aria-hidden="true"></div>
+<div id="bgB" class="bg" aria-hidden="true"></div>
+<div class="bg-shade" aria-hidden="true"></div>
+<header id="bar">
+  <div id="banners" aria-live="polite"></div>
+  <div class="row">
+    <img id="nowicon" class="nowicon" src="/static/icon.svg" alt="" width="32" height="32" hidden>
+    <div id="now" class="now">Nothing playing</div>
+    <button id="favbtn" class="icon" aria-label="Favourite this track" title="Favourite" hidden>Fav</button>
+    <button id="banbtn" class="icon" aria-label="Ban this track" title="Ban and skip" hidden>Ban</button>
+    <button id="skip" class="icon" aria-label="Next track" title="Next track">Next</button>
+  </div>
+  <div class="row">
+    <button id="listen" aria-pressed="false" title="Play the stream in this browser (e.g. through your phone's Bluetooth speaker)">Listen here</button>
+    <button id="nextscene2" class="primary" title="Move on to the next queued scene">Next scene</button>
+  </div>
+  <div class="row">
+    <label class="vol" aria-label="Volume">Vol <input id="volume" type="range" min="0" max="1" step="0.05" value="0.5"></label>
+  </div>
+</header>
+<audio id="player" preload="none"></audio>
+
+<main>
+  <section id="tab-scenes" class="tab">
+    <div class="controls">
+      <label class="fade">Fade <output id="fadeval">3</output> s
+        <input id="fade" type="range" min="0" max="15" step="1" value="3"></label>
+      <button id="fadeout">Fade out</button>
+      <button id="renderctl" title="Stop playing and rendering so the GPU idles; a track already rendering finishes">Stop playing &amp; rendering</button>
+    </div>
+    <form id="describe" autocomplete="off">
+      <div class="row gap wrap">
+        <label for="descr" id="descrlabel">Describe a scene</label>
+        <label class="check"><input type="checkbox" id="advmode"> Advanced mode</label>
+      </div>
+      <p id="rawhelp" class="muted" hidden>Tip: once you have the gist, ask <a href="https://gemini.google.com" target="_blank" rel="noopener">Google's AI</a>
+        to finish it for you. Paste the template below and your idea, and ask it to fill in every &lt;tag&gt; in 70 words or fewer, instrumental only.
+        Then paste its answer here.</p>
+      <textarea id="rawprompt" rows="6" maxlength="800" aria-describedby="describehint" hidden></textarea>
+      <div class="dfield">
+        <input id="descr" maxlength="300" aria-describedby="describehint" enterkeyhint="go" placeholder="sea battle against pirates at dusk">
+        <button id="describego" type="submit">Describe</button>
+      </div>
+      <p id="describehint" class="muted">Keep it short: a place and a mood, about 9 words. Only the first words are used in the music prompt; the rest is cut.</p>
+    </form>
+    <h2>Queue</h2>
+    <div class="row gap">
+      <button id="nextscene" class="primary">Next scene</button>
+      <span id="queuehint" class="muted"></span>
+    </div>
+    <div id="queue" class="cards"></div>
+    <h2>Scenes</h2>
+    <input id="scenesearch" type="search" placeholder="Search scenes" aria-label="Search scenes" autocomplete="off" enterkeyhint="search">
+    <div id="scenes" class="cards"></div>
+    <div class="row gap">
+      <button id="newscene">+ New scene</button>
+      <button id="custom">Custom…</button>
+    </div>
+  </section>
+
+  <section id="tab-status" class="tab" hidden>
+    <h2>Music ready</h2>
+    <p class="muted">Aim: 10 min for the playing scene, 6 min (never under 3) for the next one in the queue.</p>
+    <div id="statusrows" class="cards"></div>
+    <h2>Generators</h2>
+    <ul id="statusgens" class="plain"></ul>
+  </section>
+
+  <section id="tab-library" class="tab" hidden>
+    <h2>Library</h2>
+    <div class="usage"><div id="usagebar" class="usagebar"><span></span></div></div>
+    <p id="usagetext" class="muted"></p>
+    <p id="librarywarn" class="err" hidden></p>
+    <p class="muted">Your music lives in <span id="datapath"></span>. Back this folder up.</p>
+    <div class="row gap wrap">
+      <button id="cleanup">Clean up</button>
+      <a id="exportlink" class="btn" href="/api/library/export" download>Export favourites</a>
+      <label class="btn" for="importfile">Import</label>
+      <input id="importfile" type="file" accept=".zip,application/zip" hidden>
+    </div>
+    <audio id="preview" preload="none"></audio>
+    <div id="favourites"></div>
+    <h2>Banned</h2>
+    <div id="banned"></div>
+  </section>
+
+  <section id="tab-settings" class="tab" hidden>
+    <h2>Players</h2>
+    <label>Number of players <input id="players" type="number" min="0" max="20" step="1" value="0" inputmode="numeric"></label>
+    <p class="muted">Players open <strong id="playersurl">/players</strong> on their phones and like or dislike the track. When more than half dislike it, it is skipped. 0 turns voting off.</p>
+    <h2>Library size</h2>
+    <input id="libcap" type="range" min="1" max="50" step="1" value="5" aria-describedby="libcaplabel">
+    <p id="libcaplabel" class="qlabel"></p>
+    <p class="muted">Old, unplayed and banned music is deleted automatically above this. Favourites are never deleted.</p>
+    <h2>Music quality</h2>
+    <input id="quality" type="range" min="1" max="3" step="1" value="2" aria-describedby="qualitylabel">
+    <div class="qmarks"><span data-q="1">1</span><span data-q="2">2</span><span data-q="3">3</span></div>
+    <p id="qualitylabel" class="qlabel"></p>
+    <p id="qualityhint" class="muted" hidden></p>
+    <p class="muted">Applies to new music. Higher takes longer to make.</p>
+    <h2>Speakers</h2>
+    <p id="caststatus" class="cast">Not casting</p>
+    <div id="devices" class="devices"><p class="muted">Searching…</p></div>
+    <div class="row gap">
+      <button id="refresh">Refresh</button>
+      <button id="caststart" class="primary">Cast</button>
+      <button id="caststop">Stop</button>
+    </div>
+    <p class="muted">For several speakers, pick a Google speaker group: groups play in sync.</p>
+    <h2>Generators</h2>
+    <ul id="generators" class="plain"></ul>
+    <h2>Stream</h2>
+    <p><a id="streamurl" href="/stream.mp3">/stream.mp3</a></p>
+    <h2>Session</h2>
+    <form method="post" action="/logout" class="row gap"><button id="logout" type="submit">Log out</button></form>
+  </section>
+</main>
+
+<footer class="credit">Powered by Stability AI</footer>
+
+<nav id="tabs">
+  <button data-tab="scenes" class="active">Scenes</button>
+  <button data-tab="status">Status</button>
+  <button data-tab="library">Library</button>
+  <button data-tab="settings"><span class="cog" aria-hidden="true"></span>Settings</button>
+</nav>
+
+<dialog id="editor">
+  <form id="editform">
+    <h2 id="edittitle">Scene</h2>
+    <label>Name <input name="name" required maxlength="60"></label>
+    <label id="promptrow" hidden>Prompt <textarea name="prompt" rows="6" maxlength="800"></textarea></label>
+    <label class="vocabfield">Location <select name="location"></select></label>
+    <label class="vocabfield">Mood <select name="mood"></select></label>
+    <label class="vocabfield">Tempo <select name="tempo"></select></label>
+    <label class="check vocabfield"><input type="checkbox" name="choir"> Choir</label>
+    <fieldset id="iconrow"><legend>Icon and background</legend><div id="iconpick" class="iconpick"></div></fieldset>
+    <fieldset><legend>Start</legend><div class="chips">
+      <label class="chip"><input type="radio" name="start" value="build" checked><span>Build up</span></label>
+      <label class="chip"><input type="radio" name="start" value="straight"><span>Straight in</span></label>
+    </div></fieldset>
+    <label class="vocabfield">Extra <input name="extra" maxlength="200" placeholder="e.g. war drums, low strings"></label>
+    <p id="editerr" class="err"></p>
+    <div class="row gap wrap">
+      <button type="submit" value="apply" id="applybtn" class="primary">Save &amp; queue</button>
+      <button type="submit" value="save" id="savebtn">Save</button>
+      <button type="submit" value="delete" id="delbtn" class="danger">Delete</button>
+      <button type="button" id="cancelbtn">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

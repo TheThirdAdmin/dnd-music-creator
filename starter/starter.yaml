@@ -1,0 +1,319 @@
+model: stable_audio_3_medium
+quality: 2
+scenes:
+- name: Tavern night
+  location: tavern
+  mood: calm
+  tempo: medium
+  choir: false
+  start: build
+  tracks:
+  - file: tavern-night-1.opus
+    seed: 677802371
+    duration_s: 222.8
+  - file: tavern-night-2.opus
+    seed: 1971977827
+    duration_s: 220.0
+  - file: tavern-night-3.opus
+    seed: 2012934801
+    duration_s: 224.9
+- name: Village (Peaceful)
+  location: town
+  mood: calm
+  tempo: slow
+  choir: false
+  start: build
+  prompt: Folk music for a peaceful medieval village. Warm and tranquil, slow. A solo
+    wooden flute plays a gentle, rolling melody, with soft acoustic lute providing
+    warm chords underneath. Close-miked sound. Instrumental.
+  icon: town
+  tracks:
+  - file: town-1.opus
+    seed: 1856516935
+    duration_s: 184.1
+  - file: town-2.opus
+    seed: 1517932336
+    duration_s: 179.7
+  - file: town-3.opus
+    seed: 1772886544
+    duration_s: 219.2
+- name: Village (Troubled)
+  location: town
+  mood: tense
+  tempo: slow
+  choir: false
+  start: build
+  prompt: Folk music for a troubled medieval village. Tense and melancholy, slow.
+    A solo viol or cello plays a sorrowful, lingering melody, with dissonant acoustic
+    guitar and low drones pulsing anxiously underneath. Close-miked sound. Instrumental.
+  icon: town
+  tracks:
+  - file: village-troubled-1.opus
+    seed: 1074356160
+    duration_s: 222.7
+  - file: village-troubled-2.opus
+    seed: 1699881945
+    duration_s: 197.5
+  - file: village-troubled-3.opus
+    seed: 1820029900
+    duration_s: 184.7
+- name: Forest travel
+  location: forest road
+  mood: calm
+  tempo: medium
+  choir: false
+  start: build
+  tracks:
+  - file: forest-travel-1.opus
+    seed: 2102937943
+    duration_s: 237.6
+  - file: forest-travel-2.opus
+    seed: 1541857657
+    duration_s: 237.2
+  - file: forest-travel-3.opus
+    seed: 1431532121
+    duration_s: 209.1
+- name: Mountain pass
+  location: mountain pass
+  mood: tense
+  tempo: slow
+  choir: false
+  start: build
+  tracks:
+  - file: mountain-pass-1.opus
+    seed: 674622171
+    duration_s: 181.4
+  - file: mountain-pass-2.opus
+    seed: 1595515462
+    duration_s: 221.4
+  - file: mountain-pass-3.opus
+    seed: 239267390
+    duration_s: 227.4
+- name: At sea
+  location: at sea
+  mood: calm
+  tempo: medium
+  choir: false
+  start: straight
+  tracks:
+  - file: at-sea-1.opus
+    seed: 925313842
+    duration_s: 181.6
+  - file: at-sea-2.opus
+    seed: 1315595158
+    duration_s: 201.4
+  - file: at-sea-3.opus
+    seed: 1286709653
+    duration_s: 160.2
+- name: Dungeon
+  location: dungeon
+  mood: tense
+  tempo: slow
+  choir: false
+  start: build
+  tracks:
+  - file: dungeon-1.opus
+    seed: 1486888818
+    duration_s: 192.0
+  - file: dungeon-2.opus
+    seed: 1334915757
+    duration_s: 216.0
+  - file: dungeon-3.opus
+    seed: 2034058996
+    duration_s: 204.1
+- name: Crypt
+  location: crypt
+  mood: dread
+  tempo: slow
+  choir: false
+  start: build
+  tracks:
+  - file: crypt-1.opus
+    seed: 1464793894
+    duration_s: 190.6
+  - file: crypt-2.opus
+    seed: 1119842415
+    duration_s: 226.3
+  - file: crypt-3.opus
+    seed: 1420216930
+    duration_s: 221.2
+- name: Ancient ruins
+  location: ancient ruins
+  mood: mysterious
+  tempo: slow
+  choir: false
+  start: build
+  tracks:
+  - file: ancient-ruins-1.opus
+    seed: 409729183
+    duration_s: 202.0
+  - file: ancient-ruins-2.opus
+    seed: 918641248
+    duration_s: 217.9
+  - file: ancient-ruins-3.opus
+    seed: 791943683
+    duration_s: 234.0
+- name: Combat
+  location: battlefield
+  mood: combat
+  tempo: fast
+  choir: true
+  start: straight
+  tracks:
+  - file: combat-1.opus
+    seed: 816947243
+    duration_s: 210.1
+  - file: combat-2.opus
+    seed: 1628679353
+    duration_s: 199.1
+  - file: combat-3.opus
+    seed: 249834963
+    duration_s: 210.5
+- name: Boss fight
+  location: castle hall
+  mood: boss fight
+  tempo: fast
+  choir: true
+  start: straight
+  tracks:
+  - file: boss-fight-1.opus
+    seed: 1054833353
+    duration_s: 181.4
+  - file: boss-fight-2.opus
+    seed: 539488489
+    duration_s: 223.3
+  - file: boss-fight-3.opus
+    seed: 705323396
+    duration_s: 220.9
+- name: Victory
+  location: castle hall
+  mood: triumphant
+  tempo: medium
+  choir: true
+  start: build
+  tracks:
+  - file: victory-1.opus
+    seed: 337269721
+    duration_s: 203.1
+  - file: victory-2.opus
+    seed: 1073638605
+    duration_s: 226.5
+  - file: victory-3.opus
+    seed: 979084159
+    duration_s: 231.7
+- name: Bardcore
+  location: bardcore
+  mood: calm
+  tempo: medium
+  choir: false
+  start: build
+  tracks:
+  - file: bardcore-1.opus
+    seed: 1879838199
+    duration_s: 223.4
+  - file: bardcore-2.opus
+    seed: 1806245846
+    duration_s: 235.8
+  - file: bardcore-3.opus
+    seed: 1067193940
+    duration_s: 234.9
+- name: City
+  location: city
+  mood: lively
+  tempo: medium
+  choir: false
+  start: straight
+  prompt: Orchestral music for a busy medieval marketplace. Lively and bustling, fast.
+    Woodwinds play a playful, winding melody, with plucked strings and frame drums
+    driving the energetic rhythm underneath. Spacious hall sound. Instrumental.
+  icon: city
+  tracks:
+  - file: city-1.opus
+    seed: 1279867243
+    duration_s: 181.5
+  - file: city-2.opus
+    seed: 1337692701
+    duration_s: 230.2
+  - file: city-3.opus
+    seed: 31954695
+    duration_s: 179.6
+- name: Sea battle
+  location: sea battle
+  mood: combat
+  tempo: fast
+  choir: true
+  start: straight
+  tracks:
+  - file: sea-battle-1.opus
+    seed: 113954969
+    duration_s: 234.8
+  - file: sea-battle-2.opus
+    seed: 1480768797
+    duration_s: 226.7
+  - file: sea-battle-3.opus
+    seed: 540547926
+    duration_s: 227.3
+- name: Cathedral
+  location: cathedral
+  mood: calm
+  tempo: slow
+  choir: false
+  start: build
+  tracks:
+  - file: cathedral-1.opus
+    seed: 1862405917
+    duration_s: 220.1
+  - file: cathedral-2.opus
+    seed: 1902552989
+    duration_s: 178.2
+  - file: cathedral-3.opus
+    seed: 1499972433
+    duration_s: 196.0
+- name: Funeral
+  location: temple
+  mood: sad
+  tempo: slow
+  choir: true
+  start: build
+  tracks:
+  - file: funeral-1.opus
+    seed: 583744389
+    duration_s: 183.4
+  - file: funeral-2.opus
+    seed: 1921890528
+    duration_s: 220.0
+  - file: funeral-3.opus
+    seed: 1494432854
+    duration_s: 235.0
+- name: Funny combat
+  location: circus
+  mood: farcical
+  tempo: fast
+  choir: false
+  start: build
+  tracks:
+  - file: funny-combat-1.opus
+    seed: 4242
+    duration_s: 119.2
+  - file: funny-combat-2.opus
+    seed: 1875580877
+    duration_s: 204.9
+  - file: funny-combat-3.opus
+    seed: 663195418
+    duration_s: 177.4
+- name: Sexy battle
+  location: nightclub
+  mood: seductive
+  tempo: medium
+  choir: false
+  start: build
+  tracks:
+  - file: sexy-battle-1.opus
+    seed: 4247
+    duration_s: 117.5
+  - file: sexy-battle-2.opus
+    seed: 641270511
+    duration_s: 186.7
+  - file: sexy-battle-3.opus
+    seed: 707297817
+    duration_s: 205.8

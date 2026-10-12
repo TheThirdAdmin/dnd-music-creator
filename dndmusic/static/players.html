@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14101f">
+<title>D&amp;D Music: Players</title>
+<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="players">
+<main>
+  <h1>Players</h1>
+  <p id="track" class="now">Nothing playing</p>
+  <p id="status" class="muted" aria-live="polite"></p>
+  <div class="votegrid">
+    <button id="like" class="votebtn" disabled>Like</button>
+    <button id="dislike" class="votebtn danger" disabled>Dislike</button>
+  </div>
+  <p id="tally" class="muted"></p>
+  <p id="err" class="err" aria-live="polite"></p>
+</main>
+<script src="/static/players.js"></script>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14101f">
+<title>D&amp;D Music: DM only</title>
+<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/static/style.css">
+<style>
+  html, body { height: 100%; margin: 0; overflow: hidden; background: #0b0814; }
+  /* The picture is 1920x1080. The stage is sized to cover the screen and shifted so the chest (at
+     50% across) stays centred and the password field always sits on it. */
+  .stage { --w: max(100vw, calc(100vh * 1.7778)); position: absolute; top: 50%; width: var(--w);
+    aspect-ratio: 1920 / 1080; transform: translateY(-50%);
+    left: min(0px, max(calc(100vw - var(--w)), calc(50vw - 0.5 * var(--w))));
+    background: url("/static/lock.webp") center / 100% 100% no-repeat; }
+  form { position: absolute; left: 50%; top: 66%; width: 26%; min-width: 150px; transform: translate(-50%, -50%);
+    display: grid; gap: 6px; }
+  input { width: 100%; box-sizing: border-box; min-height: 44px; font: inherit; font-size: 18px; text-align: center;
+    color: var(--text); background: rgba(20, 16, 31, .88); border: 3px solid var(--frame-edge); border-radius: 0; }
+  input:focus { outline: 3px solid var(--frame); }
+  button { width: 100%; }
+  #err { min-height: 1.4em; margin: 0; text-align: center; color: #ffd0cc; text-shadow: 0 2px 0 #000; }
+  header { position: absolute; top: 3vh; left: 0; right: 0; padding: 0 16px; text-align: center; }
+  h1 { margin: 0; font-size: clamp(20px, 4vw, 40px); color: var(--frame); text-shadow: 0 3px 0 #000; }
+  #quip { margin: 6px auto 0; max-width: 40em; font-size: clamp(14px, 2vw, 20px); color: var(--text);
+    text-shadow: 0 2px 0 #000; }
+</style>
+</head>
+<body>
+<div class="stage" role="img" aria-label="A treasure chest in an orc cave"></div>
+<header>
+  <h1>Roll for Entry</h1>
+  <p id="quip"></p>
+</header>
+<form id="f" autocomplete="off">
+  <input id="pw" type="password" aria-label="DM password" placeholder="Password" autofocus
+         autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="go">
+  <button class="primary" type="submit">Open</button>
+  <p id="err" aria-live="polite"></p>
+</form>
+<script>
+const QUIPS = [
+  'Roll a Wisdom save to remember the password.',
+  'Matt Mercer would make you describe how you open the door.',
+  'Go ahead and make a perception check. It\'s a login page.',
+  'Behind this door: music, and a mimic that is also music.',
+  'Three words, camelCase. Matt Mercer would have given you a voice for each.',
+  'Only the DM may pass. Players, back to arguing about the loot split.',
+  'Welcome back to the one hour of silence before the dice start rolling.',
+  'It\'s a login page, not a trap. Probably. Roll to detect.',
+  'Nat 20 on the password. The DM allows it.',
+  'Sorry, the bard is already in. Please wait in the tavern.',
+  '"Can I roll persuasion on the login form?" No.',
+  'The party may rest here. The music will not.',
+  'Yes, it\'s a Strength check. No, you may not use Charisma.',
+  'Fifteen minutes to enter the password, three hours to decide which tavern.',
+  'Warning: this app will not make you as good as Brennan Lee Mulligan. It will make you sound like you hired an orchestra.',
+];
+document.getElementById('quip').textContent = QUIPS[Math.floor(Math.random() * QUIPS.length)];
+document.getElementById('f').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const err = document.getElementById('err');
+  err.textContent = '';
+  try {
+    const r = await fetch('/api/login', {method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({password: document.getElementById('pw').value})});
+    if (r.ok) { location.replace('/'); return; }
+    err.textContent = r.status === 401 ? 'The chest stays shut.' : 'Something went wrong.';
+  } catch (e) { err.textContent = 'Can\'t reach the server.'; }
+});
+</script>
+</body>
+</html>
