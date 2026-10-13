@@ -285,8 +285,11 @@ main() {
 
   printf '\n%s%s has been uninstalled.%s\n' "$BOLD$GREEN" "$APP_NAME" "$RESET"
   if [ "$PRESERVE" = 1 ]; then
-    local kept="$library"
+    local kept="$library" kept_tracks=0
     [ "$inside" = 1 ] && kept="$PRESERVE_DEST"
+    kept_tracks="$(find "$kept" -name '*.opus' 2>/dev/null | wc -l || true)"; kept_tracks="${kept_tracks:-0}"
+    printf '\n%sYour music library is SAFE:%s %s tracks in\n    %s\n' "$BOLD$GREEN" "$RESET" "$kept_tracks" "$kept"
+    echo "(The folder $INSTALL_DIR is gone; if your shell was in it, it now looks empty.)"
     echo "To reinstall with your music: git clone the repository, then ./deploy.sh --library $kept"
   fi
   if [ -n "$rp_left" ]; then
