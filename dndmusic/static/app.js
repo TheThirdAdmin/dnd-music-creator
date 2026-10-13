@@ -3,6 +3,8 @@ const $ = (s) => document.querySelector(s);
 const TEMPO_LABELS = {slow: 'Slow', medium: 'Medium', fast: 'Fast'};
 const QUALITY_LABELS = {1: 'Primary school guitar lesson', 2: 'Regional orchestra on a good night', 3: '(almost) John Williams'};
 
+const RUNPOD_DOCS = 'https://github.com/TheThirdAdmin/dnd-music-creator/blob/main/docs/runpod.md';
+
 function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
 function options(values, selected, label) {
@@ -78,6 +80,11 @@ function renderBar() {
   }
   if (state.pending) text += ' · generating next…';
   $('#now').textContent = text;
+  const dur = np ? Number(np.duration_s) : 0;   // display-only track progress, same render path as the text
+  const pct = dur > 0 ? Math.max(0, Math.min(100, (Number(np.position_s) || 0) / dur * 100)) : 0;
+  $('#progress').hidden = !(dur > 0);
+  $('#progress').setAttribute('aria-valuenow', String(Math.round(pct)));
+  $('#progressfill').style.width = pct + '%';
   $('#favbtn').hidden = $('#banbtn').hidden = !np;
   $('#favbtn').classList.toggle('on', !!np && np.rating === 'fav');
   if (!volumeBusy) $('#volume').value = state.cast.volume;
@@ -109,6 +116,19 @@ function standingWarnings() {
       + `${minutes(r.ready_s)} of music ready${r.role === 'playing' ? ' and will repeat' : ''}`
       + `${r.generating ? ' (more is being generated)' : ' (nothing is generating it right now)'}`);
     rows.push({msg: parts.join('. ') + '.'});
+  }
+  const rp = state.runpod;
+  if (rp && rp.configured) {
+    if (rp.blocked) rows.push({msg: rp.blocked});
+    else if (rp.warming) {
+      rows.push({msg: rp.cold_start_s
+        ? `Warming up the generator on Runpod. First track in about ${Math.round(rp.cold_start_s)} s.`
+        : 'Warming up the generator on Runpod. The first start can take 6-10 minutes (container download and model load); later starts are much quicker.'});
+    }
+    const b = rp.balance;
+    if (b && b.low && b.usd !== null) {
+      rows.push({msg: `Runpod balance is $${b.usd.toFixed(2)}${b.tracks_left === null ? '' : `: about ${b.tracks_left} tracks left`}.`});
+    }
   }
   return {rows, pct};
 }
@@ -228,14 +248,41 @@ function renderStatus() {
     const st = h.ok === null ? 'checking' : h.ok ? (h.busy ? 'busy' : 'ok') : (h.status && h.status !== 'ok' ? h.status : `down: ${h.error || ''}`);
     return `<li><span class="dot ${h.ok ? 'ok' : h.ok === false ? 'bad' : ''}"></span>${esc(url)} · ${esc(st)}</li>`;
   }).join('') || '<li class="muted">None configured</li>';
+  $('#statusrunpod').innerHTML = runpodRows(state.runpod);
 }
 let statusHtml = null;
+
+const usd = (n) => (n === null || n === undefined ? 'unknown' : `$${n.toFixed(2)}`);
+
+// Cost figures are estimates until cold-start billing is checked against Runpod's own billing.
+function lastRun(r) {   // " · rendered in 55 s · waited 290 s for a worker to start"
+  if (!r) return '';
+  return ` · rendered in ${Math.round(r.exec_s)} s` +
+    (r.delay_s > 5 ? ` · waited ${Math.round(r.delay_s)} s for a worker to start` : '');
+}
+
+function runpodRows(rp) {
+  if (!rp || !rp.configured) return '<li class="muted">Not configured (Settings)</li>';
+  const c = rp.cost, b = rp.balance;
+  const est = c.estimated ? ' (estimated)' : '';
+  const src = {runpod: 'from Runpod', budget: 'from your budget', unknown: 'unknown'}[b.source] || b.source;
+  const rows = [
+    `<span class="dot ${rp.state === 'error' || rp.state === 'blocked' ? 'bad' : rp.state === 'ready' ? 'ok' : ''}"></span>${esc(rp.endpoint_id)} · ${esc(rp.state)}`,
+    ...(rp.activity ? [esc(rp.activity.detail)] : []),
+    `Last track${est}: ${c.last_track === null ? 'none yet' : usd(c.last_track)}${lastRun(c.last_run)}`,
+    `This session${est}: ${usd(c.session)} · today: ${usd(c.today)} · this month: ${usd(c.month)}`,
+    `Balance: ${usd(b.usd)} (${src})${b.tracks_left === null ? '' : ` · about ${b.tracks_left} tracks left${est}`}`,
+  ];
+  if (b.error) rows.push(`Balance read failed: ${esc(b.error)}`);
+  return rows.map((r) => `<li>${r}</li>`).join('');
+}
 
 function renderGenerators() {
   $('#generators').innerHTML = Object.entries(state.generators).map(([url, h]) => {
     const st = h.ok === null ? 'checking' : h.ok ? (h.busy ? 'busy' : 'ok') : (h.status && h.status !== 'ok' ? h.status : `down: ${h.error || ''}`);
     return `<li><span class="dot ${h.ok ? 'ok' : h.ok === false ? 'bad' : ''}"></span>${esc(url)} · ${esc(st)}</li>`;
   }).join('') || '<li class="muted">None configured (GENERATOR_URLS)</li>';
+  $('#runpoddocs').href = RUNPOD_DOCS;
   $('#streamurl').textContent = state.stream_url;
   $('#streamurl').href = state.stream_url;
 }
@@ -604,13 +651,56 @@ async function castStart() {
   try { await api('POST', '/api/cast', {targets}); } catch (e) { toast(e.message); }
 }
 
+// ---- Runpod settings (the key is write-only: the server never sends it back)
+
+const RP_NUM = {warn_below: '#rp-warn', floor: '#rp-floor', daily_cap: '#rp-cap', budget_usd: '#rp-budget'};
+
+async function loadRunpod() {
+  try {
+    const c = await api('GET', '/api/runpod');
+    $('#rp-endpoint').value = c.endpoint_id || '';
+    $('#runpod-key').value = '';
+    $('#runpod-key').placeholder = c.key_set ? 'Saved' : 'Runpod API key';
+    for (const [k, sel] of Object.entries(RP_NUM)) $(sel).value = c[k] === null || c[k] === undefined ? '' : c[k];
+  } catch (e) { toast(e.message); }
+}
+
+async function saveRunpod() {
+  const body = {api_key: $('#runpod-key').value.trim()};
+  const ep = $('#rp-endpoint').value.trim();
+  if (ep) body.endpoint_id = ep;
+  for (const [k, sel] of Object.entries(RP_NUM)) {
+    const v = $(sel).value.trim();
+    if (v !== '') body[k] = Number(v);
+    else if (k === 'daily_cap' || k === 'budget_usd') body[k] = null;   // empty clears the limit
+  }
+  try {
+    await api('PUT', '/api/runpod', body);
+    $('#runpod-key').value = '';
+    toast('Runpod settings saved.');
+    await loadRunpod();
+    await refresh();
+  } catch (e) { toast(e.message); }
+}
+
+async function testRunpod() {
+  try {
+    const r = await api('POST', '/api/runpod/test');
+    toast(r.ok ? `Runpod answers (${r.state}); balance ${r.balance === null ? 'unknown' : '$' + r.balance.toFixed(2)}.` : r.error);
+  } catch (e) { toast(e.message); }
+}
+
+async function resetRunpod() {
+  try { await api('POST', '/api/runpod/reset'); toast('Runpod errors cleared.'); await refresh(); } catch (e) { toast(e.message); }
+}
+
 // ---- wiring
 
 function showTab(name) {
   document.querySelectorAll('.tab').forEach((t) => { t.hidden = t.id !== `tab-${name}`; });
   document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('active', b.dataset.tab === name));
   store('tab', name);
-  if (name === 'settings') loadDevices();
+  if (name === 'settings') { loadDevices(); loadRunpod(); }
   if (name === 'library') loadLibrary();
 }
 
@@ -629,7 +719,9 @@ async function init() {
   $('#fadeout').addEventListener('click', () => api('POST', '/api/fadeout', {fade_s: fade()}).catch((e) => toast(e.message)));
   $('#renderctl').addEventListener('click', () =>
     api('POST', state && state.paused ? '/api/start' : '/api/stop', {fade_s: fade()}).then(refresh).catch((e) => toast(e.message)));
-  $('#skip').addEventListener('click', () => api('POST', '/api/skip').catch((e) => toast(e.message)));
+  $('#skip').addEventListener('click', () => api('POST', '/api/skip')
+    .then((r) => { if (r && r.rendering) toast('Rendering one new track for this scene'); })
+    .catch((e) => toast(e.message)));
   const listen = $('#listen'), player = $('#player');
   const listening = (on) => { listen.setAttribute('aria-pressed', String(on)); listen.textContent = on ? 'Stop listening' : 'Listen here'; castBanner(); };
   let connecting = false;
@@ -668,6 +760,9 @@ async function init() {
   $('#banbtn').addEventListener('click', () => rateNow('banned'));
   $('#tab-library').addEventListener('click', onLibraryClick);
   $('#cleanup').addEventListener('click', onCleanup);
+  $('#rp-save').addEventListener('click', saveRunpod);
+  $('#rp-test').addEventListener('click', testRunpod);
+  $('#rp-reset').addEventListener('click', resetRunpod);
   $('#importfile').addEventListener('change', onImport);
   $('#players').addEventListener('change', async (ev) => {
     const n = Math.max(0, Math.min(20, Math.round(Number(ev.target.value) || 0)));

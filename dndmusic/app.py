@@ -1,5 +1,8 @@
 import asyncio
+import json
 import logging
+import os
+import time
 import uuid
 from collections.abc import Callable
 from contextlib import asynccontextmanager
@@ -21,13 +24,19 @@ from .config import Settings
 from .director import Director
 from .evictor import Plan
 from .freetext import Rules, load_rules, text_to_scene
-from .genclient import GeneratorClient
+from .genclient import GeneratorClient, GeneratorError
 from .library import Library
 from .mixer import Engine
 from .models import STARTS, TEMPOS, DEFAULT_QUALITY, Scene
 from .auth import COOKIE, DmGate, load_password, password_ok, session_token
+from .runpod.client import RunpodClient
+from .runpod.config import FILE as RUNPOD_FILE, RunpodConfig, load_config as load_runpod_config, save_config as save_runpod_config
+from .runpod.balance import BalanceReader
+from .runpod.cost import CostLedger
+from .runpod.guard import Guard
+from .runpod.service import BUDGET_KEY, RunpodService
 from .prompts import MAX_WORDS, scene_prompt
-from .scheduler import NEXT_FLOOR_S, NEXT_TARGET_S, PLAYING_FLOOR_S, PLAYING_TARGET_S, Scheduler
+from .scheduler import NEXT_FLOOR_S, PLAYING_FLOOR_S, Scheduler
 from .starter import art_for, icon_slugs, import_starter
 from .streamer import AudioPipeline, Broadcaster
 from .votes import Votes, VoteError
@@ -107,6 +116,15 @@ class SettingsIn(BaseModel):
     library_cap_gb: int | None = Field(None, ge=1, le=50)
 
 
+class RunpodIn(BaseModel):
+    endpoint_id: str | None = Field(None, min_length=3, max_length=64, pattern=r"^[A-Za-z0-9_-]+$")
+    api_key: str | None = Field(None, max_length=200)
+    warn_below: float | None = Field(None, ge=0)
+    floor: float | None = Field(None, ge=0)
+    daily_cap: float | None = Field(None, gt=0)
+    budget_usd: float | None = Field(None, ge=0)
+
+
 @dataclass
 class Services:
     settings: Settings
@@ -121,6 +139,9 @@ class Services:
     pipeline: AudioPipeline | None = None
     last_plan: Plan | None = None
     votes: Votes = field(default_factory=Votes)
+    runpod: RunpodService | None = None
+    runpod_guard: Guard | None = None
+    runpod_tasks: list = field(default_factory=list)   # worker, health loop, balance loop of the Runpod client
 
     def enforce_cap(self) -> Plan:
         """Evict until under the cap; favourites, the playing track and each pool's last tracks are kept."""
@@ -143,6 +164,25 @@ def check_library(lib: Library, vocab: Vocab) -> None:
             lib.delete_scene(custom.id)
 
 
+def wire_runpod(cfg, lib: Library, scheduler: Scheduler, client: RunpodClient,
+                ledger: CostLedger) -> tuple[Guard, RunpodService]:
+    """Guard, service and scheduler hooks for one Runpod client (already in scheduler.clients)."""
+    rp_ref: list[RunpodService] = []
+    guard = Guard(cfg, lambda: rp_ref[0].balance_usd, lambda: ledger.spent_today(time.time()))
+    svc = RunpodService(cfg, client, guard, ledger, BalanceReader(cfg), lib,
+                        lambda: scheduler.health.get(client.base_url))
+    rp_ref.append(svc)
+    scheduler.gates[client.base_url] = guard.reason
+
+    def runpod_result(url, ok, job_id):
+        if url != client.base_url:
+            return
+        guard.record(ok)
+        svc.on_job_done(job_id)   # failed jobs cost money too
+    scheduler.on_job_result = runpod_result
+    return guard, svc
+
+
 def build_services(settings: Settings, cast_backend=None, deck_factory=None) -> Services:
     lib = Library(settings.data_dir)
     vocab = load_vocab(settings.data_dir)
@@ -152,12 +192,20 @@ def build_services(settings: Settings, cast_backend=None, deck_factory=None) -> 
         import_starter(lib, vocab, settings.starter_dir)
     engine = Engine()
     director = Director(lib, engine, deck_factory=deck_factory)
-    scheduler = Scheduler(lib, vocab, [GeneratorClient(u) for u in settings.generator_urls], director)
+    clients = [GeneratorClient(u) for u in settings.generator_urls]
+    rp_cfg = load_runpod_config(settings.data_dir, os.environ)
+    guard = rp_svc = None
+    rp_client = RunpodClient(rp_cfg) if rp_cfg is not None else None
+    if rp_client is not None:
+        clients.append(rp_client)
+    scheduler = Scheduler(lib, vocab, clients, director)
+    if rp_client is not None:
+        guard, rp_svc = wire_runpod(rp_cfg, lib, scheduler, rp_client, CostLedger(lib))
     if cast_backend is None:
         from .caster import PyChromecastBackend
         cast_backend = PyChromecastBackend()
     caster = Caster(cast_backend, lib, f"{settings.public_url}/stream.mp3")
-    services = Services(settings, lib, vocab, engine, director, scheduler, caster, rules)
+    services = Services(settings, lib, vocab, engine, director, scheduler, caster, rules, runpod=rp_svc, runpod_guard=guard)
     scheduler.on_added = services.enforce_cap
     services.votes.players = lib.get_state("players", 0)
     return services
@@ -201,13 +249,13 @@ def status_out(svc: Services, playing: dict | None, queue: list[dict]) -> list[d
     nxt = sched.next_queued_pool()
     if playing_pool is not None:
         rows.append({"pool_id": playing_pool, "name": playing["name"], "role": "playing",
-                     "target_s": PLAYING_TARGET_S, "floor_s": PLAYING_FLOOR_S})
+                     "target_s": sched.playing_target_s(), "floor_s": PLAYING_FLOOR_S})
     for q in queue:
         if q["pool_id"] == playing_pool:
             continue
         is_next = q["pool_id"] == nxt and not any(r["role"] == "next" for r in rows)
         rows.append({"pool_id": q["pool_id"], "name": q["name"], "role": "next" if is_next else "queued",
-                     "target_s": NEXT_TARGET_S if is_next else None, "floor_s": NEXT_FLOOR_S if is_next else None})
+                     "target_s": sched.next_target_s() if is_next else None, "floor_s": NEXT_FLOOR_S if is_next else None})
     for r in rows:
         r["tracks"] = svc.lib.track_count(r["pool_id"])
         r["ready_s"] = round(svc.lib.ready_seconds(r["pool_id"]))
@@ -273,6 +321,7 @@ def snapshot(svc: Services) -> dict:
         "status": status_out(svc, playing, queue),
         "jobs": {str(p): n for p, n in svc.scheduler.in_flight.items() if n > 0},
         "generators": svc.scheduler.health,
+        "runpod": svc.runpod.snapshot() if svc.runpod else {"configured": False},
         "disk_low": svc.scheduler.disk_low,
         "paused": svc.scheduler.paused,
         "cast": svc.caster.snapshot(),
@@ -312,6 +361,20 @@ class RevalidatedStatic(StaticFiles):
 
 
 def create_app(build: Callable[[], Services], *, start_background: bool = True) -> FastAPI:
+    def start_runpod_tasks(svc: Services) -> None:
+        if svc.runpod is None:
+            return
+        c = svc.runpod.client
+        svc.runpod_tasks = [asyncio.create_task(svc.scheduler.worker(c)),
+                            asyncio.create_task(svc.scheduler.health_loop(c, busy=c.active)),
+                            asyncio.create_task(svc.runpod.balance_loop())]
+
+    async def stop_runpod_tasks(svc: Services) -> None:
+        for t in svc.runpod_tasks:
+            t.cancel()
+        await asyncio.gather(*svc.runpod_tasks, return_exceptions=True)
+        svc.runpod_tasks = []
+
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         svc = build()
@@ -323,9 +386,12 @@ def create_app(build: Callable[[], Services], *, start_background: bool = True) 
             if start_background:
                 svc.broadcaster = Broadcaster(asyncio.get_running_loop())
                 svc.pipeline = AudioPipeline(svc.engine, svc.broadcaster).start()
+                rp = svc.runpod.client if svc.runpod is not None else None
                 for c in svc.scheduler.clients:
-                    tasks.append(asyncio.create_task(svc.scheduler.worker(c)))
-                    tasks.append(asyncio.create_task(svc.scheduler.health_loop(c)))
+                    if c is not rp:
+                        tasks.append(asyncio.create_task(svc.scheduler.worker(c)))
+                        tasks.append(asyncio.create_task(svc.scheduler.health_loop(c)))
+                start_runpod_tasks(svc)
                 tasks.append(asyncio.create_task(watchdog(svc.caster)))
                 tasks.append(asyncio.create_task(snapshot_daily(svc.lib)))
                 if not svc.scheduler.paused:
@@ -337,14 +403,18 @@ def create_app(build: Callable[[], Services], *, start_background: bool = True) 
             for t in tasks:
                 t.cancel()
             await asyncio.gather(*tasks, return_exceptions=True)
+            await stop_runpod_tasks(svc)
             if svc.broadcaster:
                 svc.broadcaster.hangup_all()
             if svc.pipeline:
                 svc.pipeline.stop()
             for c in svc.scheduler.clients:
                 await c.aclose()
+            if svc.runpod is not None:
+                await svc.runpod.reader.aclose()
 
     app = FastAPI(title="dnd-music", lifespan=lifespan)
+    app.state.background = start_background
     app.mount("/static", RevalidatedStatic(directory=STATIC, check_dir=False), name="static")
 
     def svc() -> Services:
@@ -559,8 +629,14 @@ def create_app(build: Callable[[], Services], *, start_background: bool = True) 
 
     @app.post("/api/skip")
     async def skip():
-        svc().director.skip()
-        return {"ok": True}
+        s = svc()
+        s.director.skip()   # plays another existing track; never bans or deletes the current one
+        pool = s.director.playing_pool_id
+        rendering = False
+        if pool is not None and s.scheduler.more[pool] + s.scheduler.in_flight[pool] == 0:
+            s.scheduler.queue_more(pool, 1)   # one new render for this scene; repeat clicks do not stack
+            rendering = True
+        return {"ok": True, "rendering": rendering}
 
     @app.get("/api/cast/devices")
     async def cast_devices():
@@ -596,6 +672,87 @@ def create_app(build: Callable[[], Services], *, start_background: bool = True) 
             await asyncio.to_thread(s.enforce_cap)
         s.scheduler.wake()
         return settings_out()
+
+    def runpod_out() -> dict:
+        s = svc()
+        cfg = s.runpod.cfg if s.runpod else None
+        if cfg is None:   # setup may have saved the endpoint id and left the key for Settings
+            try:
+                eid = json.loads((s.settings.data_dir / RUNPOD_FILE).read_text()).get("endpoint_id")
+            except (OSError, ValueError, AttributeError):
+                eid = None
+            return {"configured": False, **({"endpoint_id": eid} if eid else {})}
+        return {"configured": True, "endpoint_id": cfg.endpoint_id, "key_set": bool(cfg.api_key),
+                "warn_below": cfg.warn_below, "floor": cfg.floor, "daily_cap": cfg.daily_cap,
+                "budget_usd": cfg.budget_usd}
+
+    @app.get("/api/runpod")
+    async def get_runpod():
+        return runpod_out()
+
+    @app.put("/api/runpod")
+    async def put_runpod(body: RunpodIn):
+        s = svc()
+        path = s.settings.data_dir / RUNPOD_FILE
+        raw = json.loads(path.read_text()) if path.exists() else {}   # file only: env values never get written
+        sent = body.model_fields_set
+        old_budget = raw.get("budget_usd")
+        for k in ("endpoint_id", "warn_below", "floor"):
+            if getattr(body, k) is not None:
+                raw[k] = getattr(body, k)
+        for k in ("daily_cap", "budget_usd"):   # an explicit null clears the limit
+            if k in sent:
+                raw[k] = getattr(body, k)
+        if body.api_key:
+            raw["api_key"] = body.api_key
+        raw.setdefault("rate_per_hr", 0.0)
+        if not raw.get("endpoint_id") or not raw.get("api_key"):
+            raise HTTPException(422, "endpoint_id and api_key are required")
+        if raw.get("warn_below", 5.0) < raw.get("floor", 1.0):
+            raise HTTPException(422, "warn_below must be at least floor")
+        save_runpod_config(s.settings.data_dir, RunpodConfig(**{k: v for k, v in raw.items()
+                                                                if k in RunpodConfig.__dataclass_fields__}))
+        if raw.get("budget_usd") is not None and raw.get("budget_usd") != old_budget:
+            s.lib.set_state(BUDGET_KEY, time.time())   # the budget counts spend from now
+        cfg = load_runpod_config(s.settings.data_dir, os.environ)
+        await stop_runpod_tasks(s)
+        old = s.runpod
+        if old is not None:
+            s.scheduler.remove_client(old.client)
+            await old.client.aclose()
+            await old.reader.aclose()
+        ledger = old.ledger if old is not None else CostLedger(s.lib)
+        client = RunpodClient(cfg)
+        s.scheduler.add_client(client)
+        s.runpod_guard, s.runpod = wire_runpod(cfg, s.lib, s.scheduler, client, ledger)
+        if app.state.background:
+            start_runpod_tasks(s)
+        s.scheduler.wake()
+        return runpod_out()
+
+    @app.post("/api/runpod/test")
+    async def test_runpod():
+        s = svc()
+        if s.runpod is None:
+            return {"ok": False, "state": None, "balance": None, "error": "Runpod is not configured"}
+        err = None
+        state = None
+        try:
+            h = await s.runpod.client.health()
+            state = h.get("status")
+        except GeneratorError as e:
+            err = str(e)
+        bal = await s.runpod.reader.read()
+        if err is None and bal.error:
+            err = bal.error
+        return {"ok": err is None, "state": state, "balance": bal.usd, "error": err}
+
+    @app.post("/api/runpod/reset")
+    async def reset_runpod():
+        s = svc()
+        if s.runpod_guard is not None:
+            s.runpod_guard.reset()
+        return {"ok": True}
 
     @app.put("/api/tracks/{track_id}/rating")
     async def put_rating(track_id: int, body: RatingIn):

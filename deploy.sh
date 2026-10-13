@@ -10,7 +10,8 @@ STARTER_URL="${DND_STARTER_URL:-https://github.com/TheThirdAdmin/dnd-music-creat
 BRANCH="main"
 INSTALL_DIR=""
 PORT=""
-GEN_MODE=""          # test | gpu | cpu | remote
+GEN_MODE=""          # test | gpu | cpu | remote | runpod
+GEN_FLAGS=()         # generator options given on this command line (for conflict messages)
 GENERATOR=""         # URL(s) for remote
 GPU_ID=""
 GPU_COUNT=0
@@ -50,6 +51,11 @@ Usage: ./deploy.sh [options]
                      quality ("Primary school guitar lesson")
   --generator URL    use a music generator on another computer (comma-separate several)
   --test-generator   use the built-in test generator (test tones; nothing to download)
+  --runpod           render music on Runpod serverless GPUs (pay per second, no GPU
+                     needed here): installs the app without a generator, then creates
+                     the endpoint (scripts/runpod_setup.py; asks for Runpod keys) or
+                     walks you through it. Skip the keys to enter them later in
+                     Settings > Runpod. Cannot be combined with the generator options.
   --generator-only   run only the music generator here, for the app on another computer
                      (remembered; undo with --with-app). It has no password: use it
                      on a trusted network only.
@@ -80,11 +86,12 @@ parse_args() {
     case "$1" in
       --dir) INSTALL_DIR="${2:?--dir needs a directory}"; shift 2 ;;
       --port) PORT="${2:?--port needs a number}"; shift 2 ;;
-      --gpu) GEN_MODE="gpu"; GPU_ID="${2:?--gpu needs a GPU index or UUID}"; shift 2 ;;
-      --cpu-generator) GEN_MODE="cpu"; shift ;;
-      --generator) GEN_MODE="remote"; GENERATOR="${2:?--generator needs a URL}"; shift 2 ;;
-      --test-generator) GEN_MODE="test"; shift ;;
-      --generator-only) GENERATOR_ONLY=1; shift ;;
+      --runpod) GEN_MODE="runpod"; GEN_FLAGS+=(--runpod); shift ;;
+      --gpu) GEN_FLAGS+=(--gpu); GEN_MODE="gpu"; GPU_ID="${2:?--gpu needs a GPU index or UUID}"; shift 2 ;;
+      --cpu-generator) GEN_FLAGS+=(--cpu-generator); GEN_MODE="cpu"; shift ;;
+      --generator) GEN_FLAGS+=(--generator); GEN_MODE="remote"; GENERATOR="${2:?--generator needs a URL}"; shift 2 ;;
+      --test-generator) GEN_FLAGS+=(--test-generator); GEN_MODE="test"; shift ;;
+      --generator-only) GEN_FLAGS+=(--generator-only); GENERATOR_ONLY=1; shift ;;
       --with-app) GENERATOR_ONLY=0; shift ;;
       --library) LIBRARY_DIR="${2:?--library needs a directory}"; shift 2 ;;
       --branch) BRANCH="${2:?--branch needs a name}"; shift 2 ;;
@@ -98,6 +105,13 @@ parse_args() {
       *) usage >&2; die "unknown option: $1" ;;
     esac
   done
+  case " ${GEN_FLAGS[*]:-} " in
+    *" --runpod "*)
+      local f
+      for f in "${GEN_FLAGS[@]}"; do
+        [ "$f" = "--runpod" ] || die "--runpod cannot be combined with $f: Runpod replaces the local music generator"
+      done ;;
+  esac
   if [ -n "$PORT" ]; then
     case "$PORT" in *[!0-9]* | "") die "--port must be a number" ;; esac
   fi
@@ -315,6 +329,7 @@ choose_settings() {
     done
   fi
 
+  if [ -z "$GEN_MODE" ] && [ "$(env_get GENERATOR_MODE)" = "runpod" ]; then GEN_MODE="runpod"; fi
   if [ -z "$GEN_MODE" ]; then
     case "$(env_get COMPOSE_PROFILES)" in
       *fake*) GEN_MODE="test" ;;
@@ -324,6 +339,9 @@ choose_settings() {
         GENERATOR="$(env_get GENERATOR_URLS)"
         if [ -n "$GENERATOR" ]; then GEN_MODE="remote"; else GEN_MODE="gpu"; fi ;;
     esac
+  fi
+  if [ "$GEN_MODE" = "runpod" ] && [ "$GENERATOR_ONLY" = 1 ]; then
+    die "--runpod cannot run with --generator-only (a saved setting): run ./deploy.sh --runpod --with-app"
   fi
   if [ "$GENERATOR_ONLY" = 1 ] && { [ "$GEN_MODE" = "remote" ] || [ "$GEN_MODE" = "test" ]; }; then
     die "--generator-only runs a real music generator here: use it with --gpu ID or --cpu-generator"
@@ -347,6 +365,8 @@ choose_settings() {
          ok "music generator: Stable Audio 3 Small on the CPU (port $GENERATOR_PORT)" ;;
     remote) GENERATOR_URLS="$GENERATOR"
             ok "music generator: $GENERATOR_URLS" ;;
+    runpod) GENERATOR_URLS=""
+            ok "music generator: Runpod serverless (no generator container here)" ;;
   esac
   GENERATOR_BIND="127.0.0.1"
   if [ "$GENERATOR_ONLY" = 1 ]; then
@@ -407,6 +427,7 @@ write_env() {
 PORT=$PORT
 PUBLIC_URL=$PUBLIC_URL
 GENERATOR_URLS=$GENERATOR_URLS
+GENERATOR_MODE=$GEN_MODE
 GENERATOR_PORT=$GENERATOR_PORT
 GENERATOR_BIND=$GENERATOR_BIND
 GENERATOR_GPU=$GPU_ID
@@ -495,6 +516,31 @@ generator_status() {  # generator_status SERVICE: one line about the real genera
     ok) ok "music generator ready" ;;
     downloading*) ok "music generator: $st. The first start downloads its models (12.7 GB with a GPU, 3.5 GB without); the starter music plays meanwhile." ;;
     *) ok "music generator: ${st:-starting} (logs: ${COMPOSE[*]} logs -f $1)" ;;
+  esac
+}
+
+runpod_setup() {  # runs scripts/runpod_setup.py in the conductor image; the script is mounted, not baked in
+  local hint="Runpod is not set up: open Settings > Runpod or run scripts/runpod_setup.py"
+  local dry=0 rc=0 args=(--data-dir /data) run=(run --rm -v "$INSTALL_DIR/scripts:/scripts:ro")
+  [ "${RUNPOD_SETUP_DRY_RUN:-}" = 1 ] && { dry=1; args+=(--dry-run); }
+  if [ "$ASSUME_YES" = 1 ] && [ "$dry" = 0 ]; then   # the setup asks questions: -y never runs it
+    warn "$hint"
+    return
+  fi
+  step "Setting up Runpod"
+  [ -t 0 ] || run+=(-T)
+  [ -n "${RUNPOD_IMAGE:-}" ] && run+=(-e RUNPOD_IMAGE)
+  cd "$INSTALL_DIR"
+  RUNPOD_IMAGE="${RUNPOD_IMAGE:-}" "${COMPOSE[@]}" "${run[@]}" conductor python /scripts/runpod_setup.py "${args[@]}" || rc=$?
+  if [ "$dry" = 0 ] && [ "$rc" != 20 ] && [ -s "$LIBRARY_DIR/runpod.json" ]; then
+    "${COMPOSE[@]}" restart conductor >/dev/null   # the app reads runpod.json at start
+    local i
+    for i in $(seq 1 60); do curl -sf "http://localhost:$PORT/api/players/state" >/dev/null && break; sleep 1; done
+  fi
+  case "$rc" in
+    0) if [ "$dry" = 1 ]; then ok "Runpod dry run: nothing created"; else ok "Runpod is configured"; fi ;;
+    10) ok "Runpod: finished by hand or keys skipped (Settings > Runpod)" ;;
+    *) warn "$hint" ;;
   esac
 }
 
@@ -606,6 +652,7 @@ EOF
     gpu) echo "  Music generator: Stable Audio 3 on GPU $GPU_ID. Pick the quality in Settings (⚙) → Music quality." ;;
     cpu) echo "  Music generator: Stable Audio 3 Small on the CPU (\"Primary school guitar lesson\" quality)." ;;
     remote) echo "  Music generator: $GENERATOR_URLS" ;;
+    runpod) echo "  Music generator: Runpod serverless (set up in Settings > Runpod)" ;;
   esac
   echo "  Powered by Stability AI."
   cat <<EOF
@@ -636,6 +683,7 @@ main() {
   write_env
   configure_firewall
   start_app
+  [ "$GEN_MODE" = "runpod" ] && runpod_setup
   [ "$GENERATOR_ONLY" = 1 ] || find_speakers
   print_summary
 }

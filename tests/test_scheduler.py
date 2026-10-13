@@ -191,7 +191,8 @@ async def test_health_check_records_generator_capabilities(env):
     s = Scheduler(lib, vocab, [client], StubDirector())
     await s.check_health(client)
     assert s.health[client.base_url] == {"ok": True, "busy": False, "error": None, "gpu": False,
-                                         "qualities": [1, 2, 3], "status": "ok"}
+                                         "qualities": [1, 2, 3], "status": "ok",
+                                            "blocked": None, "warming": False}
 
 
 async def test_straight_in_pools_are_ingested_with_the_cut(lib, monkeypatch):
@@ -326,3 +327,117 @@ def test_playing_fills_to_ten_minutes_then_next_to_six():
 
 def test_in_flight_jobs_count_as_expected_music():
     assert warm(seconds=secs({1: 610, 2: 100}), in_flight=Counter({2: 2})) is None
+
+
+async def test_gate_blocks_run_one_and_shows_reason(env):
+    lib, vocab, pool = env
+    sent = []
+
+    def handler(r):
+        sent.append(r)
+        return httpx.Response(404)
+    client = GeneratorClient("http://fake", client=httpx.AsyncClient(
+        transport=httpx.MockTransport(handler), base_url="http://fake"))
+    s = Scheduler(lib, vocab, [client], StubDirector(), poll_s=0.01)
+    s.gates["http://fake"] = lambda: "blocked for test"
+    assert await s.run_one(client) is False
+    assert sent == [] and s.health["http://fake"]["blocked"] == "blocked for test"
+    s.gates["http://fake"] = lambda: None
+    with pytest.raises(GeneratorError):
+        await s.run_one(client)
+    assert sent and s.health["http://fake"]["blocked"] is None
+
+
+async def test_job_result_hook_reports_each_outcome(env):
+    lib, vocab, pool = env
+    results = []
+    ok_client = fake_client(31)
+    s = Scheduler(lib, vocab, [ok_client], StubDirector(), poll_s=0.01)
+    s.on_job_result = lambda *a: results.append(a)
+    assert await s.run_one(ok_client) is True
+    down = GeneratorClient("http://down", client=httpx.AsyncClient(
+        transport=httpx.MockTransport(lambda r: httpx.Response(503)), base_url="http://down"))
+    s.health["http://down"] = dict(s.health["http://fake"])
+    with pytest.raises(GeneratorError):
+        await s.run_one(down)
+    assert [(u, ok) for u, ok, _ in results] == [("http://fake", True), ("http://down", False)]
+    assert results[0][2] is not None and results[1][2] is None
+
+
+async def test_scheduler_fills_pool_through_runpod_client(env):
+    import base64
+    from dndmusic.runpod.client import RunpodClient
+    from dndmusic.runpod.config import RunpodConfig
+    lib, vocab, pool = env
+    wav = fake_client(31)   # reuse the fake generator's audio as the Runpod job output
+    j = await wav.submit(scene_prompt(Scene(name="T", location="tavern", mood="calm"), vocab), 31, 1, 3)
+    while (await wav.status(j)).status != "done":
+        await asyncio.sleep(0.01)
+    audio = await wav.audio(j)
+    polls = []
+
+    def handler(r):
+        if r.url.path == "/v2/ep1/run":
+            return httpx.Response(200, json={"id": "j1", "status": "IN_QUEUE"})
+        if r.url.path == "/v2/ep1/status/j1":
+            polls.append(1)
+            if len(polls) < 2:
+                return httpx.Response(200, json={"id": "j1", "status": "IN_PROGRESS"})
+            return httpx.Response(200, json={
+                "id": "j1", "status": "COMPLETED", "delayTime": 5, "executionTime": 7,
+                "output": {"audio_b64": base64.b64encode(audio).decode(), "seed": 9, "duration_s": 31,
+                           "mime": "audio/flac"}})
+        return httpx.Response(404)
+    cfg = RunpodConfig("ep1", "k", 0.5)
+    client = RunpodClient(cfg, client=httpx.AsyncClient(
+        transport=httpx.MockTransport(handler), base_url="https://rp.test/v2/ep1"))
+    s = Scheduler(lib, vocab, [client], StubDirector(), poll_s=0.01)
+    assert await s.run_one(client) is True
+    [track] = lib.tracks(pool.id)
+    assert track.generator == "runpod:ep1" and track.seed == 9
+    assert client.last_run["j1"].exec_ms == 7
+
+
+def test_playing_target_parameter_defaults_to_ten_minutes_and_can_be_eighteen():
+    assert warm(seconds=secs({1: 700, 2: 400})) is None                      # default 10 min met
+    assert warm(seconds=secs({1: 700, 2: 400}), playing_target_s=18 * 60) == 1
+    assert warm(seconds=secs({1: 1100, 2: 400}), playing_target_s=18 * 60) is None
+    assert warm(seconds=secs({1: 1100, 2: 400}), playing_target_s=18 * 60, next_target_s=10 * 60) == 2
+    assert warm(seconds=secs({1: 1100, 2: 610}), playing_target_s=18 * 60, next_target_s=10 * 60) is None
+
+
+def test_scheduler_playing_target_follows_runpod_client_live(env):
+    from dndmusic.runpod.client import RunpodClient
+    from dndmusic.runpod.config import RunpodConfig
+    from dndmusic.scheduler import PLAYING_TARGET_S, RUNPOD_PLAYING_TARGET_S
+    lib, vocab, _ = env
+    s = Scheduler(lib, vocab, [fake_client(31)], StubDirector())
+    assert s.playing_target_s() == PLAYING_TARGET_S == 600
+    rp = RunpodClient(RunpodConfig(endpoint_id="ep", api_key="k", rate_per_hr=0.58))
+    s.add_client(rp)
+    assert s.playing_target_s() == RUNPOD_PLAYING_TARGET_S == 1080
+    assert s.next_target_s() == 600
+    s.remove_client(rp)
+    assert s.playing_target_s() == 600 and s.next_target_s() == 360
+
+
+async def test_health_loop_polls_fast_only_while_busy(env):
+    lib, vocab, _ = env
+    s = Scheduler(lib, vocab, [fake_client(31)], StubDirector())
+    calls = []
+
+    class C:
+        base_url = "x"
+    s.health["x"] = Scheduler._blank_health()
+
+    async def fake_check(client):
+        calls.append(1)
+    s.check_health = fake_check
+    busy = {"v": False}
+    task = asyncio.create_task(s.health_loop(C(), interval_s=10, fast_s=0.02, busy=lambda: busy["v"]))
+    await asyncio.sleep(0.2)
+    assert len(calls) == 1          # idle: slow interval
+    busy["v"] = True
+    await asyncio.sleep(0.2)
+    task.cancel()
+    assert len(calls) >= 4          # busy: fast interval

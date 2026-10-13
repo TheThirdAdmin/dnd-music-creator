@@ -57,6 +57,9 @@ input:not([type]):focus, input[type=text]:focus, input[type=search]:focus, selec
 .now { flex: 1; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .now::before { content: ""; display: inline-block; width: 0; height: 0; margin-right: 8px;
   border: 6px solid transparent; border-left: 10px solid var(--frame); border-right: 0; }
+.progress { flex: 1; height: 8px; background: var(--ground); box-shadow: var(--notch-s); }
+.progress[hidden] { display: none; }
+.progress > div { height: 100%; width: 0; background: var(--accent); }
 .vol { flex: 1; display: flex; align-items: center; gap: 8px; }
 .cast { font-size: 16px; font-weight: 700; color: var(--bad); }
 .castbanner { margin: -8px -16px 8px; padding: 6px 16px; background: var(--bad); color: #fff; font-weight: 700; font-size: 16px; text-align: center; }

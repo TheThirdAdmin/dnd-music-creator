@@ -30,6 +30,10 @@
   <div class="row">
     <label class="vol" aria-label="Volume">Vol <input id="volume" type="range" min="0" max="1" step="0.05" value="0.5"></label>
   </div>
+  <div class="row">
+    <div id="progress" class="progress" role="progressbar" aria-label="Track progress"
+         aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden><div id="progressfill"></div></div>
+  </div>
 </header>
 <audio id="player" preload="none"></audio>
 
@@ -77,6 +81,8 @@
     <div id="statusrows" class="cards"></div>
     <h2>Generators</h2>
     <ul id="statusgens" class="plain"></ul>
+    <h2>Runpod</h2>
+    <ul id="statusrunpod" class="plain"></ul>
   </section>
 
   <section id="tab-library" class="tab" hidden>
@@ -122,6 +128,23 @@
     <p class="muted">For several speakers, pick a Google speaker group: groups play in sync.</p>
     <h2>Generators</h2>
     <ul id="generators" class="plain"></ul>
+    <h2>Runpod</h2>
+    <p class="muted">Rent a cloud GPU when your own is busy. Costs shown are estimates.</p>
+    <div class="cards">
+      <label>Endpoint id <input id="rp-endpoint" type="text" autocomplete="off" maxlength="64"></label>
+      <label>API key <input id="runpod-key" type="password" autocomplete="off" maxlength="200" placeholder="Runpod API key"></label>
+      <p class="muted">Turn auto-pay off in Runpod (Settings, Billing) so spending stops at your balance.</p>
+      <label>Warn below ($) <input id="rp-warn" type="number" min="0" step="0.5" inputmode="decimal"></label>
+      <label>Stop below ($) <input id="rp-floor" type="number" min="0" step="0.5" inputmode="decimal"></label>
+      <label>Daily cap ($, empty for none) <input id="rp-cap" type="number" min="0" step="0.5" inputmode="decimal"></label>
+      <label>Budget ($, used when Runpod can't report a balance) <input id="rp-budget" type="number" min="0" step="1" inputmode="decimal"></label>
+    </div>
+    <div class="row gap wrap">
+      <button id="rp-save" class="primary">Save</button>
+      <button id="rp-test">Test</button>
+      <button id="rp-reset">Reset after errors</button>
+    </div>
+    <p><a id="runpoddocs" href="#" target="_blank" rel="noopener">Runpod setup guide</a></p>
     <h2>Stream</h2>
     <p><a id="streamurl" href="/stream.mp3">/stream.mp3</a></p>
     <h2>Session</h2>

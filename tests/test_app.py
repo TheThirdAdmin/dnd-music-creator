@@ -65,7 +65,40 @@ def test_apply_custom_and_errors(client):
 
 def test_fadeout_and_skip(client):
     assert client.post("/api/fadeout", json={"fade_s": 2}).json() == {"ok": True}
-    assert client.post("/api/skip").json() == {"ok": True}
+    assert client.post("/api/skip").json() == {"ok": True, "rendering": False}   # nothing playing
+
+
+def _play(client):
+    s = client.post("/api/scenes", json={"name": "Fight", "location": "battlefield", "mood": "combat"}).json()
+    lib = client.svc.lib
+    lib.add_track(s["pool_id"], lib.new_track_path(), 30.0, 1, "g")
+    client.post("/api/apply", json={"scene_id": s["id"], "fade_s": 0})
+    return s
+
+
+def test_skip_queues_one_render_for_the_playing_pool(client):
+    s = _play(client)
+    sch = client.svc.scheduler
+    assert client.svc.director.playing_pool_id == s["pool_id"]
+    assert client.post("/api/skip").json() == {"ok": True, "rendering": True}
+    assert sch.more[s["pool_id"]] == 1
+    assert client.post("/api/skip").json() == {"ok": True, "rendering": False}   # pending: no stacking
+    assert sch.more[s["pool_id"]] == 1
+    sch.more[s["pool_id"]] = 0
+    sch.in_flight[s["pool_id"]] = 1
+    assert client.post("/api/skip").json()["rendering"] is False
+
+
+def test_skip_never_bans_or_deletes_the_track(client):
+    s = _play(client)
+    lib = client.svc.lib
+    before = lib.pool_tracks(s["pool_id"]) if hasattr(lib, "pool_tracks") else None
+    tid = client.get("/api/state").json()["now_playing"]["track_id"]
+    rating = lib.get_track(tid).rating
+    client.post("/api/skip")
+    t = lib.get_track(tid)
+    assert t is not None and t.rating == rating and rating != "banned"
+    assert before is None or len(lib.pool_tracks(s["pool_id"])) == len(before)
 
 
 def test_stop_and_start_rendering(client):
@@ -160,6 +193,23 @@ def test_quality_setting(client):
     assert client.get("/api/state").json()["quality"] == 3
     assert client.put("/api/settings", json={"quality": 4}).status_code == 422
     assert client.svc.lib.get_state("quality") == 3
+
+
+def test_build_services_adds_the_runpod_client_from_env(tmp_path, monkeypatch):
+    from dndmusic.runpod.client import RunpodClient
+    monkeypatch.setenv("RUNPOD_API_KEY", "k")
+    monkeypatch.setenv("RUNPOD_ENDPOINT_ID", "ep9")
+    svc = build_services(Settings(8000, "http://dm.test:8000", (), tmp_path), cast_backend=FakeBackend())
+    [c] = svc.scheduler.clients
+    assert isinstance(c, RunpodClient) and c.base_url == "runpod:ep9"
+    assert "runpod:ep9" in svc.scheduler.gates and svc.runpod is not None
+
+
+def test_build_services_without_runpod_config_has_no_runpod_client(tmp_path, monkeypatch):
+    monkeypatch.delenv("RUNPOD_API_KEY", raising=False)
+    monkeypatch.delenv("RUNPOD_ENDPOINT_ID", raising=False)
+    svc = build_services(Settings(8000, "http://dm.test:8000", (), tmp_path), cast_backend=FakeBackend())
+    assert svc.scheduler.clients == [] and svc.scheduler.gates == {}
 
 
 def test_build_services_refuses_a_scene_the_vocab_lacks(tmp_path):

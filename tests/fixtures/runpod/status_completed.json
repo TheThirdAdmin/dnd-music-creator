@@ -1,0 +1,14 @@
+{
+  "delayTime": 292267,
+  "executionTime": 353912,
+  "id": "<job-id>-u1",
+  "output": {
+    "audio_b64": "<8626140 base64 chars elided>",
+    "duration_s": 60,
+    "mime": "audio/flac",
+    "render_seconds": 22.18,
+    "seed": 42
+  },
+  "status": "COMPLETED",
+  "workerId": "<worker-id>"
+}

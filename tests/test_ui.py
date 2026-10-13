@@ -143,3 +143,25 @@ def test_scene_search_box(client):
     assert 'id="scenesearch"' in client.get("/").text
     js = client.get("/static/app.js").text
     assert "sceneMatches" in js and "#scenesearch" in js
+
+
+def test_runpod_settings_and_banners(client):
+    html = client.get("/").text
+    assert 'id="runpod-key"' in html and 'type="password"' in html and 'autocomplete="off"' in html
+    assert "Turn auto-pay off in Runpod (Settings, Billing) so spending stops at your balance." in html
+    for needle in ('id="rp-save"', 'id="rp-test"', 'id="rp-reset"', 'id="statusrunpod"'):
+        assert needle in html
+    js = client.get("/static/app.js").text
+    assert "Warming up the generator on Runpod. First track in about " in js
+    assert "The first start can take 6-10 minutes (container download and model load); later starts are much quicker." in js
+    assert "Runpod balance is $" in js and "tracks left" in js
+    assert "localStorage" not in js[js.index("async function saveRunpod"):js.index("async function resetRunpod")]
+
+
+def test_track_progress_bar_under_volume(client):
+    html = client.get("/").text
+    assert html.index('id="volume"') < html.index('id="progress"')
+    assert 'role="progressbar"' in html and 'aria-valuemin="0"' in html and 'aria-valuemax="100"' in html
+    js = client.get("/static/app.js").text
+    assert "#progressfill" in js and "Math.min(100" in js
+    assert ".progress" in client.get("/static/style.css").text

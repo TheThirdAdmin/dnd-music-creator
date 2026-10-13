@@ -20,7 +20,7 @@ services:
     user: "${APP_UID:-1000}:${APP_GID:-1000}"
     environment:
       PORT: "${PORT:-8000}"
-      GENERATOR_URLS: "${GENERATOR_URLS:-http://localhost:${GENERATOR_PORT:-8001}}"
+      GENERATOR_URLS: "${GENERATOR_URLS-http://localhost:${GENERATOR_PORT:-8001}}"
       PUBLIC_URL: "${PUBLIC_URL:-}"
       HOST_DATA_PATH: "${DATA_PATH:-./data}"
       DM_PASSWORD: "${DM_PASSWORD:-on}"

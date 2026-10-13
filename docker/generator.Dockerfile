@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM python:3.12-slim AS base
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends git gcc libc6-dev \
@@ -22,4 +22,12 @@ ENV MODEL_DIR=/models PORT=8001 COMFY_DIR=/opt/comfyui WORK_DIR=/tmp/dndgen \
     HOME=/tmp USER=dndmusic LOGNAME=dndmusic PYTHONUNBUFFERED=1
 VOLUME /models
 EXPOSE 8001
+
+FROM base AS runpod
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg \
+ && rm -rf /var/lib/apt/lists/* \
+ && pip install --no-cache-dir runpod==1.12.0
+CMD ["python", "-m", "generator.runpod_worker"]
+
+FROM base AS generator
 CMD ["python", "-m", "generator"]

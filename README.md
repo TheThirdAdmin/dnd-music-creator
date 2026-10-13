@@ -8,7 +8,7 @@ Background music for your D&D table that you steer from your phone. You describe
 
 It was designed with Dungeons & Dragons in mind, but nothing in it is specific to that game: any tabletop role-playing game, board game or storytelling session can use it. Scenes are just a place, a mood and a tempo, and you can write your own.
 
-> **Status:** milestones 1 to 6 of 8 done. See the [roadmap](docs/roadmap.md). Powered by Stability AI.
+> **Status:** milestones 1 to 6 and 8 of 8 done. See the [roadmap](docs/roadmap.md). Powered by Stability AI.
 
 ## Why use it at the table
 
@@ -70,6 +70,16 @@ There are two sides. The **back end** is the computer that does the work; the **
 - Optional: Chromecast or Google Nest speakers, and `qrencode` if you'd like a QR code to scan with your phone.
 
 macOS and Windows aren't supported. The app relies on Docker *host networking* to find speakers on your network, and Docker Desktop doesn't provide that.
+
+### No GPU? Use Runpod
+
+Render on rented cloud GPUs instead: about $0.01-0.05 per new track, nothing running when idle, no GPU or generator image on your computer.
+
+```bash
+./deploy.sh --runpod
+```
+
+**Turn auto-pay off in Runpod (Settings, Billing) first and load a small fixed amount**, so the most you can spend is the balance you loaded. The setup asks you to confirm it. **Read the whole [Runpod backend](docs/runpod.md) page before you set it up**: costs, the manual path, safety, teardown and the known limits are all there, and you should understand them first.
 
 ### A computer with an NVIDIA GPU (one-time setup)
 
@@ -139,6 +149,7 @@ Run `./deploy.sh --help` for the full list. The common ones:
 | `--cpu-generator` | Run the generator on the CPU: slow, lowest quality only. |
 | `--generator http://gpu-box:8001` | Use a music generator running on another computer. |
 | `--test-generator` | Use the built-in test generator (test tones, nothing to download). |
+| `--runpod` | Render on Runpod cloud GPUs, no local GPU. See [Runpod backend](docs/runpod.md). |
 | `--generator-only` | Run only the generator here, for the app on another computer. Remembered; undo with `--with-app`. |
 | `--library /path/to/library` | Keep the music library somewhere else, e.g. a library saved by `uninstall.sh --preserve-library`. |
 | `--dir /opt/dnd-music-creator` | Install somewhere other than `~/dnd-music-creator` (when not running from a checkout). |
@@ -257,6 +268,7 @@ Everything you generate, your favourites and your scenes live in one folder, the
 ## More
 
 - [How it works](docs/architecture.md): the pieces, how scenes become prompts, how the library fills itself.
+- [Runpod backend](docs/runpod.md): render on rented GPUs, costs, setup and safety.
 - [Configuration](docs/configuration.md): `.env` settings and `vocab.yaml`.
 - [Retro UI and backgrounds](docs/ui-and-art.md): the look, the art budget, how to refine the pictures.
 - [Roadmap](docs/roadmap.md): what is done and what is planned.

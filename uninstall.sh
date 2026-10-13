@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # uninstall.sh: stop dnd-music-creator and remove it: containers, images, the code,
 # and any firewall rules deploy.sh added. The music library is deleted too, unless
-# you pass --preserve-library. Run ./uninstall.sh --help for the options.
+# you pass --preserve-library. Runpod resources (endpoint, template, volume) live in
+# your Runpod account: interactively it offers to delete them first (scripts/runpod_setup.py
+# --teardown); with -y it only tells you their ids. Run ./uninstall.sh --help for the options.
 set -euo pipefail
 
 APP_NAME="dnd-music-creator"
@@ -42,15 +44,25 @@ Usage: ./uninstall.sh [options]
   -y, --yes                 don't ask for confirmation
   -h, --help                show this help
 
+Runpod endpoint, template and network volume (if runpod_setup.py made them) stay in
+your Runpod account and the volume keeps billing: a normal run offers to delete them
+first (needs a temporary All-access key); -y never does, it lists them at the end.
+
 Without --preserve-library the music library is deleted; without --keep-models the models too.
 EOF
 }
 
-ask() {  # ask "Question?" EXPECTED: returns 0 when the user types EXPECTED
+ANSWER=""
+ask() {  # ask "Question?" EXPECTED: returns 0 when the user types EXPECTED (the answer is left in $ANSWER)
   [ "$ASSUME_YES" = 1 ] && return 0
-  local answer=""
-  { read -r -p "  $1 " answer </dev/tty; } 2>/dev/null || true
-  [ "$answer" = "$2" ]
+  ANSWER=""
+  printf '  %s ' "$1" >&2   # read -p would be silenced by the redirect below, which only hides "no tty" errors
+  { read -r ANSWER </dev/tty; } 2>/dev/null || true
+  [ "$ANSWER" = "$2" ]
+}
+
+mismatch() {  # mismatch EXPECTED: what was typed and what was needed
+  printf "You typed '%s'; expected '%s'. " "$ANSWER" "$1"
 }
 
 parse_args() {
@@ -112,6 +124,30 @@ find_docker() {
   fi
 }
 
+runpod_ids() {  # runpod_ids FILE: prints "endpoint template volume" ("-" for unknown); nothing without an endpoint id
+  [ -f "$1" ] || return 0
+  python3 -I -c '
+import json, sys
+try:
+    d = json.load(open(sys.argv[1]))
+except (OSError, ValueError):
+    sys.exit(0)
+c = d.get("created") or {}
+e = c.get("endpoint_id") or d.get("endpoint_id")
+if e:
+    print(e, c.get("template_id") or "-", c.get("volume_id") or "-")
+' "$1" 2>/dev/null || true
+}
+
+runpod_leftover_text() {  # ids in "E T V" form -> "endpoint E, template T, volume V" (unknown ones left out)
+  local e t v out
+  read -r e t v <<<"$1"
+  out="endpoint $e"
+  [ "$t" != "-" ] && out="$out, template $t"
+  [ "$v" != "-" ] && out="$out, volume $v"
+  echo "$out"
+}
+
 is_library() { [ -f "$1/dnd-music.db" ] || [ -d "$1/tracks" ]; }
 
 main() {
@@ -164,11 +200,39 @@ main() {
     printf '  %sDeletes%s your music library: %s tracks, %s in %s\n' "$RED" "$RESET" "$tracks" "$size" "$library"
     echo "    (to keep it, cancel and run: ./uninstall.sh --preserve-library)"
   fi
+  local rp_ids="" rp_text="" rp_left=""
+  rp_ids="$(runpod_ids "$library/runpod.json")"
+  if [ -n "$rp_ids" ]; then
+    rp_text="$(runpod_leftover_text "$rp_ids")"
+    printf '  %sRunpod:%s %s stay in your Runpod account; the network volume bills about $1.05/month (estimate)\n' "$YELLOW" "$RESET" "$rp_text"
+  fi
   echo
   if [ "$PRESERVE" = 0 ] && [ "$tracks" -gt 0 ]; then
-    ask "Type 'delete' to remove everything including $tracks tracks:" delete || die "cancelled, nothing was changed"
+    ask "Type 'delete' to remove everything including $tracks tracks:" delete || die "$(mismatch delete)Nothing was changed."
   else
-    ask "Type 'yes' to continue:" yes || die "cancelled, nothing was changed"
+    ask "Type 'yes' to continue:" yes || die "$(mismatch yes)Nothing was changed."
+  fi
+
+  rp_left="$rp_text"
+  if [ -n "$rp_ids" ] && [ "$ASSUME_YES" = 0 ]; then
+    if ! ask "Delete these from Runpod first? Needs a temporary All-access key. Type 'yes':" yes; then
+      warn "$(mismatch yes)Skipping the Runpod teardown; the uninstall continues."
+    else
+      if [ "${#COMPOSE[@]}" -eq 0 ]; then
+        warn "Docker isn't available here, so the teardown can't run: delete them in the Runpod console"
+      else
+        step "Deleting the Runpod resources"
+        local run=(run --rm -v "$INSTALL_DIR/scripts:/scripts:ro") rc=0
+        [ -t 0 ] || run+=(-T)
+        (cd "$INSTALL_DIR" && "${COMPOSE[@]}" "${run[@]}" conductor python /scripts/runpod_setup.py --data-dir /data --teardown) || rc=$?
+        if [ "$rc" = 0 ] && [ -z "$(runpod_ids "$library/runpod.json")" ]; then
+          ok "Runpod resources deleted"
+          rp_left=""
+        else
+          warn "the Runpod teardown did not finish; the uninstall continues"
+        fi
+      fi
+    fi
   fi
 
   if [ "${#COMPOSE[@]}" -gt 0 ]; then
@@ -224,6 +288,10 @@ main() {
     local kept="$library"
     [ "$inside" = 1 ] && kept="$PRESERVE_DEST"
     echo "To reinstall with your music: git clone the repository, then ./deploy.sh --library $kept"
+  fi
+  if [ -n "$rp_left" ]; then
+    printf '%sRunpod resources were NOT deleted:%s %s. Delete them in the Runpod console (Serverless; Storage) or they keep costing money.\n' "$YELLOW" "$RESET" "$rp_left"
+    [ "$PRESERVE" = 1 ] && echo "The ids are in runpod.json in the kept library."
   fi
   if [ "$KEEP_MODELS" = 1 ] && [ -n "$volume" ]; then
     echo "The models stay in Docker volume $volume: a reinstall reuses them as long as the Compose project is still named $project."
