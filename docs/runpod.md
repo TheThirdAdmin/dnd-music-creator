@@ -119,7 +119,7 @@ Keys are read with a hidden prompt only: never from the command line, never prin
 
 | Resource | Setting |
 |---|---|
-| Template `dnd-music-generator` | image `ghcr.io/thethirdadmin/dnd-music-generator:m8-rc1`, 20 GB container disk, env `MODEL_DIR=/runpod-volume`, no ports |
+| Template `dnd-music-generator` | image `ghcr.io/thethirdadmin/dnd-music-generator:v0.1.0`, 20 GB container disk, env `MODEL_DIR=/runpod-volume`, no ports |
 | Network volume `dnd-music-models` | 15 GB, data centre EU-RO-1 |
 | Endpoint `dnd-music` | queue type, GPUs RTX A4000 or A4500 (pool `AMPERE_16`), CUDA 13.0 or newer, workers min 0 / max 1, idle timeout 5 s, execution timeout 600 s, FlashBoot on, queue-delay scaling 4 s |
 
@@ -127,7 +127,7 @@ Keys are read with a hidden prompt only: never from the command line, never prin
 
 **Exit codes** (the script, and what `deploy.sh` reports): `0` configured, `10` finished by hand or keys skipped (finish in Settings > Runpod), `20` aborted, nothing created or the state is described in the output.
 
-The image default is the only published tag, `m8-rc1`; the package is public so Runpod can pull it with no registry credentials.
+The image default is `v0.1.0`, built by GitHub Actions from the tag of the same name; the package is public so Runpod can pull it with no registry credentials.
 
 When it finishes it prints the endpoint id, the worst-case hourly cost (estimate), the teardown command, and a reminder to delete the temporary All-access key in the console. Do that now.
 
@@ -146,7 +146,7 @@ Options: `--image REF`, `--pool AMPERE_16`, `--data-center EU-RO-1`, `--volume-g
 
 Used when you skip the key, the key cannot create endpoints, or a create fails. `scripts/runpod_setup.py --manual` (or `./deploy.sh --runpod`, then skip the key) prints the same steps. Console labels may change; the settings are what matter.
 
-1. **Template.** Console, Serverless, then Templates, New template. Type serverless. Container image `ghcr.io/thethirdadmin/dnd-music-generator:m8-rc1`, container disk 20 GB, environment variable `MODEL_DIR` = `/runpod-volume`, no exposed ports.
+1. **Template.** Console, Serverless, then Templates, New template. Type serverless. Container image `ghcr.io/thethirdadmin/dnd-music-generator:v0.1.0`, container disk 20 GB, environment variable `MODEL_DIR` = `/runpod-volume`, no exposed ports.
 2. **Network volume.** Console, Storage, New network volume. 15 GB, data centre **EU-RO-1**. Pick the data centre first: the volume only mounts on workers in the same data centre, so the endpoint must be allowed to run there.
 3. **Endpoint.** Console, Serverless, New endpoint, type **Queue**.
    - GPU types: RTX A4000 and RTX A4500 (the 16 GB "Ampere" group). Optionally also RTX 4090 (24 GB, $1.10/hour, 2x the cost; the app's cost rows keep using $0.58 and under-report when a 4090 runs).
@@ -199,7 +199,7 @@ Used when you skip the key, the key cannot create endpoints, or a create fails. 
 2. Runpod console, Serverless, open the endpoint, Manage, edit the endpoint (or edit its template under Templates) and change the container image tag. Save. The next cold start pulls the new image; the models on the volume are kept.
 3. Check CUDA is still 13.0 or newer.
 
-For a fresh install of another tag, `RUNPOD_IMAGE=ghcr.io/…:<tag> ./deploy.sh --runpod` or `--image` on the script. Unpublished tag: the script's anonymous check says so before anything is created. The tag `m8-rc1` is the only one published today (see [Known limits](#known-limits)).
+For a fresh install of another tag, `RUNPOD_IMAGE=ghcr.io/…:<tag> ./deploy.sh --runpod` or `--image` on the script. Unpublished tag: the script's anonymous check says so before anything is created. Tags are published by pushing a `v*` git tag to the public repository; the image tag is the git tag.
 
 **Tearing down.** From the install folder, with a temporary All-access key:
 
@@ -248,10 +248,9 @@ Check the console after: Serverless (no endpoints), Storage (no volumes), Billin
 
 Not done yet; none of these cost money unexpectedly, but they are rough edges:
 
-- **A dead ComfyUI makes jobs hang** until the 600 s timeout instead of failing at once (`wait_ready()` in `generator/runpod_worker.py` needs a fail-fast; needs an image rebuild). The 3-failure brake and the cost per hung job (about $0.10 at 600 s) bound it.
+- **A dead ComfyUI fails the job after about 6 s** with the real reason (`generator is not starting: error: ...`); endpoints on an image older than `v0.1.0` (`m8-rc1`) still hang until the 600 s timeout. Move them to `v0.1.0`.
 - **One job at a time.** Concurrency 2 needs a conductor change.
 - **`rate_per_hr` and the warm-up targets are not editable in the UI.** The rate is set at setup (0.58) and in `runpod.json`.
-- **The release tag is still `m8-rc1`**; there is no `v*` release flow yet.
 - **Worker log detail is not reachable through the job API**; use the console.
 - **Up to 3 workers may appear with max 1** during a cold burst.
 - **The first-start time on a slow network is unverified** (one live run, 6-10 minutes).

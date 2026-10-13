@@ -359,7 +359,7 @@ def teardown(data_dir: Path, transport=None) -> int:
 # ---- main flow ---------------------------------------------------------------------------------------
 
 # Only tag published to ghcr.io so far; bump when the release workflow publishes a v* tag.
-DEFAULT_IMAGE_TAG = "m8-rc1"
+DEFAULT_IMAGE_TAG = "v0.1.0"
 MANIFEST_ACCEPT = ", ".join([
     "application/vnd.oci.image.index.v1+json", "application/vnd.oci.image.manifest.v1+json",
     "application/vnd.docker.distribution.manifest.list.v2+json",

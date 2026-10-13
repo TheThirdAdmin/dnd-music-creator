@@ -31,15 +31,24 @@ def fit_output(audio: bytes, mime: str, limit: int, transcode=ffmpeg_ogg) -> tup
     return small, "audio/ogg"
 
 
-async def wait_ready(client: httpx.AsyncClient, timeout_s: float = READY_TIMEOUT_S) -> None:
+ERROR_POLLS = 3  # consecutive "error: ..." health polls before a job fails instead of hanging
+
+
+async def wait_ready(client: httpx.AsyncClient, timeout_s: float = READY_TIMEOUT_S, poll_s: float = 2.0) -> None:
     deadline = time.monotonic() + timeout_s
+    errors = 0
     while time.monotonic() < deadline:
         try:
-            if (await client.get("/health")).json().get("ok"):
+            h = (await client.get("/health")).json()
+            if h.get("ok"):
                 return
+            status = str(h.get("status") or "")
+            errors = errors + 1 if status.startswith("error") else 0
+            if errors >= ERROR_POLLS:
+                raise RuntimeError(f"generator is not starting: {status}")
         except (httpx.HTTPError, ValueError):
             pass
-        await asyncio.sleep(2)
+        await asyncio.sleep(poll_s)
     raise RuntimeError("generator did not become ready (model download or ComfyUI start failed)")
 
 

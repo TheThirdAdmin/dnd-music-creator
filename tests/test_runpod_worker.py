@@ -44,3 +44,22 @@ def test_fit_output_transcodes_only_when_too_big():
 def test_fit_output_gives_up_if_still_too_big():
     with pytest.raises(RuntimeError, match="too large"):
         rw.fit_output(b"a" * 1000, "audio/flac", 100, lambda b: b"b" * 500)
+
+
+def health_client(bodies):
+    it = iter(bodies)
+    return httpx.AsyncClient(transport=httpx.MockTransport(lambda req: httpx.Response(200, json=next(it))),
+                             base_url="http://gen")
+
+
+async def test_wait_ready_fails_fast_when_comfyui_is_dead():
+    bad = {"ok": False, "status": "error: ComfyUI exited (code 1)"}
+    with pytest.raises(RuntimeError, match="not starting: error: ComfyUI exited"):
+        await rw.wait_ready(health_client([bad] * 10), timeout_s=60, poll_s=0)
+
+
+async def test_wait_ready_survives_a_transient_error_and_downloads():
+    bodies = [{"ok": False, "status": "downloading 40%"}, {"ok": False, "status": "error: x"},
+              {"ok": False, "status": "restarting ComfyUI"}, {"ok": False, "status": "error: x"},
+              {"ok": True, "status": "ready"}]
+    await rw.wait_ready(health_client(bodies), timeout_s=60, poll_s=0)

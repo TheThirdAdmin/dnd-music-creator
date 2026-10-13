@@ -17,7 +17,7 @@ spec.loader.exec_module(rs)
 
 TEMP_KEY = "rpa_TEMPALLACCESS999"
 RESTRICTED = "rpa_RESTRICTED777"
-IMAGE = "ghcr.io/thethirdadmin/dnd-music-generator:m8-rc1"
+IMAGE = "ghcr.io/thethirdadmin/dnd-music-generator:v0.1.0"
 BASE = "https://x/v1"
 
 
@@ -137,6 +137,9 @@ def prompts(monkeypatch):
     def _getpass(prompt=""):
         p.asked.append(prompt)
         return p.secrets.pop(0)
+    real_check = rs.check_image   # no real ghcr.io call when a test gives no transport
+    monkeypatch.setattr(rs, "check_image", lambda image, transport=None: True if transport is None
+                        else real_check(image, transport))
     monkeypatch.setattr("builtins.input", _input)
     monkeypatch.setattr(rs.getpass, "getpass", _getpass)
     monkeypatch.setattr(sys, "argv", ["runpod_setup.py", "--data-dir", "x"])
@@ -316,9 +319,9 @@ def ghcr(manifest_status=200, token_status=200, seen=None):
 
 
 def test_default_image_uses_the_published_tag(monkeypatch):
-    assert rs.default_image() == "ghcr.io/thethirdadmin/dnd-music-generator:m8-rc1"
+    assert rs.default_image() == "ghcr.io/thethirdadmin/dnd-music-generator:v0.1.0"
     monkeypatch.setattr(rs, "IMAGE_BASE", "ghcr.io/me/gen")
-    assert rs.default_image() == "ghcr.io/me/gen:m8-rc1"
+    assert rs.default_image() == "ghcr.io/me/gen:v0.1.0"
     monkeypatch.setattr(rs, "IMAGE_BASE", "ghcr.io/me/gen:v2")
     assert rs.default_image() == "ghcr.io/me/gen:v2"
 
@@ -327,7 +330,7 @@ def test_check_image_found_missing_and_skipped():
     seen = []
     assert rs.check_image(IMAGE, ghcr(200, seen=seen)) is True
     assert seen[0][1].startswith("https://ghcr.io/token?scope=repository") and seen[1][0] == "HEAD"
-    assert "manifests/m8-rc1" in seen[1][1]
+    assert "manifests/v0.1.0" in seen[1][1]
     for st in (404, 401, 403):
         assert rs.check_image(IMAGE, ghcr(st)) is False
     assert rs.check_image(IMAGE, ghcr(token_status=403)) is False

@@ -24,7 +24,7 @@ The Runpod endpoint and key normally live in `runpod.json` in the library folder
 | `RUNPOD_API_KEY` | Restricted key. Read by the conductor process; wins over `runpod.json` and is never written to it. The stock `docker-compose.yml` does not pass it into the container: use Settings > Runpod. |
 | `RUNPOD_ENDPOINT_ID` | Endpoint id, same rules as the key. |
 | `RUNPOD_API_BASE` | Job API base (default `https://api.runpod.ai/v2`). Tests and demos only. |
-| `RUNPOD_IMAGE` | Generator image the setup script puts in the template (default `ghcr.io/thethirdadmin/dnd-music-generator:m8-rc1`); `deploy.sh --runpod` passes it through. A name without a tag gets the default tag. |
+| `RUNPOD_IMAGE` | Generator image the setup script puts in the template (default `ghcr.io/thethirdadmin/dnd-music-generator:v0.1.0`); `deploy.sh --runpod` passes it through. A name without a tag gets the default tag. |
 | `RUNPOD_MGMT_BASE` | Runpod management API for the setup script (default `https://rest.runpod.io/v1`). Tests and demos only. |
 | `RUNPOD_SETUP_DRY_RUN` | `1`: the setup prints its plan and price and creates nothing. |
 
