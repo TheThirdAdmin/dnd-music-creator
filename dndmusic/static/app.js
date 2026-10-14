@@ -92,7 +92,8 @@ function renderBar() {
   $('#caststatus').textContent = c.casting && c.targets.length
     ? c.targets.map((t) => `${t.name}: ${t.status}`).join(', ')
     : 'Not casting';
-  $('#caststatus').classList.toggle('on', c.casting);
+  const castBad = c.casting ? c.targets.filter((t) => /^(error|not found)/.test(t.status || '')) : [];
+  $('#caststatus').classList.toggle('on', c.casting && !castBad.length);
   castBanner();
 }
 
@@ -116,6 +117,12 @@ function standingWarnings() {
       + `${minutes(r.ready_s)} of music ready${r.role === 'playing' ? ' and will repeat' : ''}`
       + `${r.generating ? ' (more is being generated)' : ' (nothing is generating it right now)'}`);
     rows.push({msg: parts.join('. ') + '.'});
+  }
+  const c = state.cast;
+  if (c && c.casting) {
+    for (const t of c.targets) {
+      if (/^(error|not found)/.test(t.status || '')) rows.push({msg: `Speaker ${t.name}: ${t.status}`});
+    }
   }
   const rp = state.runpod;
   if (rp && rp.configured) {

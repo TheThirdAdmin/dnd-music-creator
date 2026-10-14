@@ -124,78 +124,123 @@ class Caster:
         self.volume: float = lib.get_state("volume", 0.5)
         self.status: dict[str, str] = {}
         self._lock = threading.Lock()
+        self._dev_locks: dict[str, threading.Lock] = {}
 
     def _save(self) -> None:
         self.lib.set_state("cast_targets", self.targets)
         self.lib.set_state("casting", self.casting)
         self.lib.set_state("volume", self.volume)
 
+    # _lock guards the state (targets, casting, volume) and is never held across device I/O: an
+    # unreachable device blocks for a minute or more. Device I/O is serialised per device instead.
+    def _dev(self, uuid: str) -> threading.Lock:
+        with self._lock:
+            return self._dev_locks.setdefault(uuid, threading.Lock())
+
+    def _wanted(self, uuid: str) -> bool:
+        with self._lock:
+            return self.casting and uuid in self.targets
+
     def _play(self, uuid: str) -> None:
-        try:
-            self.backend.play(uuid, self.stream_url)
-            self.backend.set_volume(uuid, self.volume)
-            self.status[uuid] = "playing"
-        except Exception as e:
-            log.warning("cast to %s failed: %r", uuid, e)
-            self.status[uuid] = f"error: {e}"
+        with self._dev(uuid):
+            if not self._wanted(uuid):
+                return
+            try:
+                self.backend.play(uuid, self.stream_url)
+                self.backend.set_volume(uuid, self.volume)
+                ok, err = True, ""
+            except Exception as e:
+                log.warning("cast to %s failed: %r", uuid, e)
+                ok, err = False, f"error: {e}"
+            if not self._wanted(uuid):   # Stop (or another target set) arrived while this call was blocked
+                if ok:
+                    try:
+                        self.backend.stop(uuid)
+                    except Exception as e:
+                        log.warning("stop %s failed: %r", uuid, e)
+                self.status[uuid] = "stopped"
+            else:
+                self.status[uuid] = "playing" if ok else err
 
     def _stop_one(self, uuid: str) -> None:
+        """Never waits for a device another call is stuck on; that call stops it when it returns."""
+        lock = self._dev(uuid)
+        self.status[uuid] = "stopped"
+        if not lock.acquire(blocking=False):
+            return
         try:
             self.backend.stop(uuid)
         except Exception as e:
             log.warning("stop %s failed: %r", uuid, e)
-        self.status[uuid] = "stopped"
+        finally:
+            lock.release()
 
     def devices(self):
         return self.backend.devices()
 
     def start(self, targets: list[str]) -> None:
         with self._lock:
-            for uuid in self.targets:
-                if uuid not in targets:
-                    self._stop_one(uuid)
+            old = [u for u in self.targets if u not in targets]
             self.targets = list(targets)
             self.casting = True
             self._save()
-            for uuid in self.targets:
-                self._play(uuid)
+        for uuid in old:
+            self._stop_one(uuid)
+        for uuid in targets:
+            self._play(uuid)
 
     def stop(self) -> None:
         with self._lock:
             self.casting = False
             self._save()
-            for uuid in self.targets:
-                self._stop_one(uuid)
+            targets = list(self.targets)
+        for uuid in targets:
+            self._stop_one(uuid)
 
     def set_volume(self, volume: float) -> None:
         with self._lock:
             self.volume = min(1.0, max(0.0, float(volume)))
             self._save()
-            if self.casting:
-                for uuid in self.targets:
-                    try:
-                        self.backend.set_volume(uuid, self.volume)
-                    except Exception as e:
-                        self.status[uuid] = f"error: {e}"
+            casting, targets, vol = self.casting, list(self.targets), self.volume
+        if casting:
+            for uuid in targets:
+                lock = self._dev(uuid)
+                if not lock.acquire(blocking=False):
+                    continue   # a cast to this device is in flight and sets the volume itself
+                try:
+                    self.backend.set_volume(uuid, vol)
+                except Exception as e:
+                    self.status[uuid] = f"error: {e}"
+                finally:
+                    lock.release()
 
     def check(self) -> None:
         """Watchdog tick: re-cast any target that stopped playing our stream."""
         with self._lock:
             if not self.casting:
                 return
-            for uuid in self.targets:
+            targets = list(self.targets)
+        for uuid in targets:
+            lock = self._dev(uuid)
+            if not lock.acquire(blocking=False):
+                continue
+            try:
+                if not self._wanted(uuid):
+                    continue
                 try:
                     ok = self.backend.is_playing_ours(uuid)
                 except Exception as e:
                     self.status[uuid] = f"error: {e}"
                     continue
-                if ok is None:
-                    self.status[uuid] = "not found"
-                elif ok:
-                    self.status[uuid] = "playing"
-                else:
-                    log.info("re-casting to %s", uuid)
-                    self._play(uuid)
+            finally:
+                lock.release()
+            if ok is None:
+                self.status[uuid] = "not found"
+            elif ok:
+                self.status[uuid] = "playing"
+            else:
+                log.info("re-casting to %s", uuid)
+                self._play(uuid)
 
     def snapshot(self) -> dict:
         try:

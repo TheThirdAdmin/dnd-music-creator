@@ -279,13 +279,13 @@ def run_test_job(cfg: RunpodConfig, client=None, timeout_s: int = 1500, poll_s: 
             t0, last = time.monotonic(), 0.0
             while time.monotonic() - t0 < timeout_s:
                 st = await c.status(jid)
-                if st.state == "done":
+                if st.status == "done":
                     m = c.last_run.get(jid)
                     return {"delay_s": (m.delay_ms if m else 0) / 1000, "exec_s": (m.exec_ms if m else 0) / 1000}
-                if st.state == "failed":
+                if st.status == "failed":
                     return {"error": st.error or "job failed"}
                 if time.monotonic() - last >= 15:
-                    print(f"  test job {st.state}, {time.monotonic() - t0:.0f} s")
+                    print(f"  test job {st.status}, {time.monotonic() - t0:.0f} s")
                     last = time.monotonic()
                 await asyncio.sleep(poll_s)
             return {"error": f"no result after {timeout_s} s"}

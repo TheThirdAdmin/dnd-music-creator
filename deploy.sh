@@ -523,7 +523,7 @@ runpod_setup() {  # runs scripts/runpod_setup.py in the conductor image; the scr
   local hint="Runpod is not set up: open Settings > Runpod or run scripts/runpod_setup.py"
   local dry=0 rc=0 args=(--data-dir /data) run=(run --rm -v "$INSTALL_DIR/scripts:/scripts:ro")
   [ "${RUNPOD_SETUP_DRY_RUN:-}" = 1 ] && { dry=1; args+=(--dry-run); }
-  if [ "$ASSUME_YES" = 1 ] && [ "$dry" = 0 ]; then   # the setup asks questions: -y never runs it
+  if [ "$ASSUME_YES" = 1 ] && [ "$dry" = 0 ] && [ ! -t 0 ]; then   # -y does not skip the Runpod questions; without a terminal they cannot be asked
     warn "$hint"
     return
   fi

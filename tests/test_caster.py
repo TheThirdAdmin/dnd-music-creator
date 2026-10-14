@@ -195,3 +195,45 @@ def test_pychromecast_devices_with_none_friendly_name():
     normal_device = next((d for d in devices if d.uuid == "uuid-1"), None)
     assert normal_device is not None
     assert normal_device.name == "Speaker"
+
+
+def test_stop_does_not_wait_for_a_hung_device(lib):
+    import threading, time
+
+
+    gate = threading.Event()
+    be = _hung_backend(gate)
+    c = Caster(be, lib, "http://x/stream.mp3")
+    t = threading.Thread(target=c.start, args=(["u1"],))
+    t.start()
+    time.sleep(0.2)
+    t0 = time.monotonic()
+    c.stop()                                   # must return while play() is still blocked
+    assert time.monotonic() - t0 < 1
+    gate.set()
+    t.join(5)
+    assert c.status["u1"] == "stopped" and be.stopped == ["u1"]
+
+
+def _hung_backend(gate):
+    class B:
+        stopped: list = []
+
+        def __init__(self):
+            self.stopped = []
+
+        def devices(self):
+            return []
+
+        def play(self, uuid, url):
+            gate.wait(5)
+
+        def stop(self, uuid):
+            self.stopped.append(uuid)
+
+        def set_volume(self, uuid, v):
+            pass
+
+        def is_playing_ours(self, uuid):
+            return True
+    return B()
