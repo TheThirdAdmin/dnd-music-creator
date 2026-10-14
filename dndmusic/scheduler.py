@@ -170,6 +170,8 @@ class Scheduler:
     async def run_one(self, client: GeneratorClient) -> bool:
         gate = self.gates.get(client.base_url)
         reason = gate() if gate else None
+        if reason != self.health[client.base_url].get("blocked"):
+            log.info("%s: %s", client.base_url, f"blocked: {reason}" if reason else "unblocked")
         self.health[client.base_url]["blocked"] = reason
         if reason:
             return False
@@ -192,7 +194,9 @@ class Scheduler:
         try:
             job_id = await client.submit(Prompt(pool.tags, pool.lyrics), self.rng.randint(lo, hi),
                                          self.rng.getrandbits(31), quality)
-            deadline = time.monotonic() + self.job_timeout_s
+            t0 = time.monotonic()
+            log.info("pool %s: job %s submitted to %s (quality %s)", pool_id, job_id, client.base_url, quality)
+            deadline = t0 + self.job_timeout_s
             st = await client.status(job_id)
             while st.status in ("queued", "running"):
                 if time.monotonic() >= deadline:
@@ -206,8 +210,11 @@ class Scheduler:
             duration = await asyncio.to_thread(ingest, raw, path, straight=pool.straight)
             self.lib.add_track(pool_id, path, duration, st.seed, client.base_url, quality=quality)
             self._result(client, True, job_id)
-        except GeneratorError:
+            log.info("pool %s: job %s done in %.0f s, %.0f s of audio", pool_id, job_id,
+                     time.monotonic() - t0, duration)
+        except GeneratorError as e:
             self._result(client, False, job_id)
+            log.warning("pool %s: job %s failed: %s", pool_id, job_id, e)
             raise
         except RejectedAudio as e:
             self._result(client, False, job_id)

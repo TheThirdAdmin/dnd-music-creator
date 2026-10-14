@@ -98,7 +98,7 @@ You need the app's install folder (the README's install steps; `./deploy.sh --ru
 ./deploy.sh --runpod
 ```
 
-This installs the app **without** a generator container, then runs `scripts/runpod_setup.py` inside the conductor image. `--runpod` cannot be combined with `--gpu`, `--cpu-generator`, `--generator` or `--generator-only`. With `-y` the setup is not run (it asks questions); do it later with the command under [Run it again](#run-it-again).
+This installs the app **without** a generator container, then runs `scripts/runpod_setup.py` inside the conductor image. `--runpod` cannot be combined with `--gpu`, `--cpu-generator`, `--generator` or `--generator-only`. `-y` does not skip the setup questions (auto-pay, keys): `./deploy.sh --runpod -y` still stops and asks on a terminal. Without a terminal (a script, CI) the setup is not run; do it later with the command under [Run it again](#run-it-again). Run the setup script through `deploy.sh` or Settings > Runpod, not directly on the host: it needs the conductor image's Python.
 
 Add `--image REF` to the setup script, or set `RUNPOD_IMAGE`, to use another image (see [Updating](#updating-the-image-and-tearing-down)). With `RUNPOD_SETUP_DRY_RUN=1 ./deploy.sh --runpod` (or `--dry-run` on the script) it prints the plan and price and creates nothing.
 
