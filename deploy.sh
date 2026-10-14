@@ -462,6 +462,19 @@ configure_firewall() {
     ports=("$GENERATOR_PORT/tcp"); mdns=0
     need="port $GENERATOR_PORT/tcp (the music generator; it has no password)"
   fi
+  local missing=0   # nothing to do (and nothing to ask) when the rules are already there
+  case "$fw" in
+    ufw)
+      for p in "${ports[@]}"; do sudo ufw status | grep -qE "^${p}[[:space:]]" || missing=1; done
+      if [ "$mdns" = 1 ]; then sudo ufw status | grep -qE "^5353/udp[[:space:]]" || missing=1; fi ;;
+    firewalld)
+      for p in "${ports[@]}"; do sudo firewall-cmd --quiet --permanent --query-port="$p" || missing=1; done
+      if [ "$mdns" = 1 ]; then sudo firewall-cmd --quiet --permanent --query-service=mdns || missing=1; fi ;;
+  esac
+  if [ "$missing" = 0 ]; then
+    ok "$fw: ${ports[*]}$([ "$mdns" = 1 ] && echo " and speaker discovery (mDNS)") already allowed"
+    return
+  fi
   if [ "$FIREWALL" = "no" ]; then
     warn "$fw is active and --no-firewall was given. Other computers need $need open."
     return
@@ -523,6 +536,10 @@ runpod_setup() {  # runs scripts/runpod_setup.py in the conductor image; the scr
   local hint="Runpod is not set up: open Settings > Runpod or run scripts/runpod_setup.py"
   local dry=0 rc=0 args=(--data-dir /data) run=(run --rm -v "$INSTALL_DIR/scripts:/scripts:ro")
   [ "${RUNPOD_SETUP_DRY_RUN:-}" = 1 ] && { dry=1; args+=(--dry-run); }
+  if [ "$dry" = 0 ] && [ -s "$LIBRARY_DIR/runpod.json" ]; then   # a re-run would create a second endpoint, template and volume
+    ok "Runpod already set up (Settings > Runpod); to redo it: tear down first, see docs/runpod.md"
+    return
+  fi
   if [ "$ASSUME_YES" = 1 ] && [ "$dry" = 0 ] && [ ! -t 0 ]; then   # -y does not skip the Runpod questions; without a terminal they cannot be asked
     warn "$hint"
     return

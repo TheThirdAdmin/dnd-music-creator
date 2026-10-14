@@ -211,7 +211,19 @@ def intro(p: Plan, image: str) -> str:
 # ---- config file -------------------------------------------------------------------------------------
 
 def write_config(data_dir: Path, endpoint_id: str, key: str, rate: float) -> None:
+    f = Path(data_dir) / FILE
+    try:
+        created = json.loads(f.read_text()).get("created")   # ids teardown needs: keep them across a rewrite
+    except (OSError, ValueError, AttributeError):
+        created = None
     save_config(Path(data_dir), RunpodConfig(endpoint_id, key, rate, idle_timeout_s=float(IDLE_S)))
+    if isinstance(created, dict) and created:
+        doc = json.loads(f.read_text())
+        doc["created"] = created
+        fd = os.open(f.with_suffix(".tmp"), os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, "w") as fh:
+            json.dump(doc, fh)
+        os.replace(f.with_suffix(".tmp"), f)
 
 
 def record_created(data_dir: Path, c: Created) -> None:

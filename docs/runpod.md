@@ -133,7 +133,7 @@ When it finishes it prints the endpoint id, the worst-case hourly cost (estimate
 
 ### Run it again
 
-Re-running creates a second set of resources; tear down the first ([below](#updating-the-image-and-tearing-down)) before you do. From the install folder:
+`./deploy.sh --runpod` skips the setup when `runpod.json` already exists in the library. Running the script by hand creates a second set of resources; tear down the first ([below](#updating-the-image-and-tearing-down)) before you do. From the install folder:
 
 ```bash
 docker compose run --rm -v "$PWD/scripts:/scripts:ro" conductor \

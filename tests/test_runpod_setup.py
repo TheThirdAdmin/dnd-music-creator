@@ -359,3 +359,11 @@ def test_other_registry_skips_the_check(tmp_path, prompts):
     prompts.answers, prompts.secrets = ["y", ""], [TEMP_KEY, ""]
     rs.main(["--data-dir", str(tmp_path), "--image", "docker.io/me/gen:1"], transport=httpx.MockTransport(srv))
     assert srv.calls and srv.calls[0][1] == "/endpoints"
+
+
+def test_write_config_keeps_created_ids(tmp_path):
+    rs.write_config(tmp_path, "ep1", "", 0.5)
+    rs.record_created(tmp_path, rs.Created("t1", "ep1", "v1"))
+    rs.write_config(tmp_path, "ep1", "rpa_key", 0.5)
+    doc = json.loads((tmp_path / "runpod.json").read_text())
+    assert doc["created"] == {"template_id": "t1", "endpoint_id": "ep1", "volume_id": "v1"}
